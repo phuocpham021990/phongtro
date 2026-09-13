@@ -1,161 +1,347 @@
-* { box-sizing: border-box; }
-body { font-family: Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
-.container {
-    max-width: 1400px; /* Hoặc 95% nếu bạn muốn rộng tràn màn hình */
-    margin: 20px auto;
-    padding: 20px;
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+/* ==========================================
+   RESET & CHẶN TRÀN MÀN HÌNH ĐIỆN THOẠI
+   ========================================== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
-.container h1 {
+
+html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+    background-color: #f4f6f9;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px;
+}
+
+h1 {
     text-align: center;
-    font-size: 32px;
-    font-weight: 800;
-    margin-top: 10px;
-    margin-bottom: 25px;
+    color: #0068ff;
+    margin-bottom: 15px;
+    font-size: 22px;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    background: linear-gradient(135deg, #0068ff 0%, #00c6ff 50%, #28a745 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;}
-h1, h2, h3 { color: #1a73e8; margin-top: 0; }
+}
 
-.form-inline { display: flex; gap: 10px; margin-bottom: 20px; }
-.form-inline input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-.form-inline button, .btn-primary { background: #1a73e8; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-.btn-secondary { background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
-
-/* Căn chỉnh thanh nút bấm dàn hàng ngang đẹp mắt */
-.report-actions {
+/* ==========================================
+   FORM & THANH CÔNG CỤ
+   ========================================== */
+.form-inline {
     display: flex;
     gap: 10px;
-    flex-wrap: wrap; /* Tự động xuống hàng mượt mà nếu màn hình nhỏ */
-    align-items: center;
+    margin-bottom: 15px;
+}
+
+.form-inline input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-inline button {
+    padding: 10px 20px;
+    background: #0068ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.filter-bar input {
+    flex: 2;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.filter-bar select {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* Nút thao tác hệ thống */
+.report-actions {
+    display: flex;
+    gap: 8px;
     margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
-.report-actions button {
-    flex: 1; /* Cân bằng chiều rộng các nút bấm trên cùng 1 hàng */
-    min-width: 180px; /* Đảm bảo chữ trong nút không bị bó hẹp */
-    white-space: nowrap; /* Tắt tự động xuống dòng trong chữ của nút */
+.btn-action {
+    flex: 1;
+    min-width: 140px;
+    padding: 10px;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
 }
-/* Grid thẻ phòng */
-.room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
-.room-card { background: #e8f0fe; border: 2px solid #1a73e8; border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; }
-.room-card:hover { background: #d2e3fc; transform: translateY(-3px); }
-.room-card h3 { margin: 0 0 8px 0; color: #174ea6; }
-.room-card p { margin: 0; color: #333; font-weight: bold; }
 
-/* Modal */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-.modal-overlay.hidden { display: none; }
-.modal-content { background: white; width: 90%; max-width: 800px; height: 85vh; border-radius: 8px; display: flex; flex-direction: column; padding: 20px; overflow: hidden; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-.btn-close { font-size: 28px; border: none; background: none; cursor: pointer; }
+.btn-report { background: #28a745; }
+.btn-excel { background: #17a2b8; }
+.btn-cycle { background: #ff9800; }
+.btn-backup { background: #6f42c1; }
+.btn-restore { background: #6c757d; }
 
-/* Tabs */
-.tab-bar { display: flex; gap: 5px; border-bottom: 2px solid #ddd; margin: 15px 0; }
-.tab-btn { padding: 10px 15px; border: none; background: #eee; cursor: pointer; border-radius: 6px 6px 0 0; font-weight: bold; }
-.tab-btn.active { background: #1a73e8; color: white; }
-
-.tab-content { display: none; flex: 1; overflow-y: auto; padding-right: 5px; }
-.tab-content.active { display: block; }
-
-/* Form chia cột */
-.grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
-.grid-form input, .grid-form button { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-.file-input-group { grid-column: span 2; display: flex; flex-direction: column; gap: 5px; }
-
-/* Form tính tiền */
-.billing-form { display: flex; flex-direction: column; gap: 12px; background: #f8f9fa; padding: 20px; border-radius: 6px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.form-group, .form-row div { display: flex; flex-direction: column; gap: 5px; }
-.form-row input, .form-group input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-
-.total-box { background: #e6f4ea; border: 2px solid #34a853; padding: 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; color: #137333; margin-top: 10px; }
-
-/* Bảng dữ liệu */
-.data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-.data-table th, .data-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-.data-table th { background: #f1f3f4; }
-.cards-list { display: flex; flex-direction: column; gap: 10px; }
-.tenant-card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 10px; display: flex; gap: 15px; align-items: center; }
-.tenant-img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
-
-/* Phiếu thu preview */
-.receipt-box { background: #fff8e1; border: 2px dashed #ffa000; padding: 18px; border-radius: 8px; font-family: monospace, sans-serif; line-height: 1.6; color: #333; overflow-y: auto; max-height: 50vh; }
-.receipt-box h3 { text-align: center; color: #d84315; margin-bottom: 5px; }
-.receipt-line { display: flex; justify-content: space-between; border-bottom: 1px dotted #ccc; padding: 4px 0; }
-.receipt-total { font-weight: bold; font-size: 16px; color: #2e7d32; border-top: 2px solid #333; margin-top: 10px; padding-top: 5px; }
 /* ==========================================
-   CẤU HÌNH GIAO DIỆN CHUẨN CHO ĐIỆN THOẠI (RESPONSIVE)
+   DANH SÁCH Ô PHÒNG (GRID)
    ========================================== */
+.room-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+}
 
+/* ==========================================
+   MODAL & TAB TÍNH NĂNG
+   ========================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.tab-bar {
+    display: flex;
+    gap: 5px;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px 5px;
+    background: #f1f1f1;
+    border: none;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.tab-btn.active {
+    background: #0068ff;
+    color: white;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Form nhập dữ liệu trong tab */
+.grid-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.grid-form input, .grid-form select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.form-row > div {
+    flex: 1;
+}
+
+.form-row input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.total-box {
+    background: #e7f1ff;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-box strong {
+    color: #d9534f;
+    font-size: 18px;
+}
+
+.action-btn-group, .form-btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    grid-column: span 2;
+}
+
+.btn-primary { flex: 1; padding: 10px; background: #0068ff; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+.btn-secondary { padding: 10px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; }
+.btn-success { flex: 1; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+.btn-zalo { flex: 1; padding: 12px; background: #0068ff; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+.btn-print { padding: 12px 18px; background: #6c757d; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+
+/* Bảng dữ liệu hỗ trợ cuộn */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    min-width: 500px;
+}
+
+.data-table th, .data-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    font-size: 13px;
+}
+
+.data-table th {
+    background: #f8f9fa;
+}
+
+.report-summary-header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+/* ==========================================
+   TỐI ƯU DÀNH RIÊNG CHO ĐIỆN THOẠI (RESPONSIVE)
+   ========================================== */
 @media (max-width: 768px) {
-    /* 1. Thu gọn lề trang web cho vừa màn hình nhỏ */
-    body {
-        padding: 10px;
-    }
-    
     .container {
-        padding: 10px;
+        padding: 8px;
     }
 
     h1 {
-        font-size: 20px;
-        text-align: center;
+        font-size: 18px;
     }
 
-    /* 2. Ép danh sách thẻ phòng hiển thị 1 hoặc 2 cột trên điện thoại */
+    /* Ép tất cả các thanh nút công cụ thành dạng nằm dọc */
+    .form-inline, .filter-bar, .report-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .filter-bar input, .filter-bar select, .btn-action {
+        width: 100%;
+    }
+
+    /* Hiển thị thẻ phòng 2 cột mượt mà trên điện thoại */
     .room-grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-        gap: 10px !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
     }
 
-    /* 3. Chuyển các thanh nút bấm nằm dọc để dễ bấm ngón tay */
-    .report-actions, .filter-bar, .form-inline {
-        flex-direction: column !important;
-        gap: 8px !important;
-    }
-
-    .report-actions button, .filter-bar input, .filter-bar select {
-        width: 100% !important;
-        box-sizing: border-box;
-    }
-
-    /* 4. Tối ưu khung Modal hiển thị tràn màn hình điện thoại */
+    /* Tối ưu Modal vừa khít màn hình điện thoại */
     .modal-content {
-        width: 95% !important;
-        max-width: 100% !important;
-        padding: 15px !important;
-        margin: 10px auto !important;
-        max-height: 90vh !important;
-        overflow-y: auto !important;
+        padding: 12px;
+        max-height: 95vh;
     }
 
-    /* 5. Cho phép cuộn ngang đối với các bảng dữ liệu dài (Bảng thiết bị, Bảng báo cáo) */
-    .data-table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-
-    /* 6. Chuyển các ô nhập liệu trong form thành 1 cột */
-    .grid-form, .form-row {
-        grid-template-columns: 1fr !important;
-        flex-direction: column !important;
-    }
-
-    /* 7. Thu nhỏ thanh Tab chuyển đổi tính năng */
     .tab-bar {
         flex-wrap: wrap;
-        gap: 5px;
     }
-    
+
     .tab-btn {
         flex: 1 1 45%;
-        padding: 8px 5px;
-        font-size: 13px;
+        padding: 8px 2px;
+        font-size: 12px;
+    }
+
+    /* Chuyển form nhập trong Modal thành 1 cột */
+    .grid-form, .form-row {
+        grid-template-columns: 1fr !important;
+        flex-direction: column;
+    }
+
+    .action-btn-group, .form-btn-group {
+        flex-direction: column;
+        grid-column: span 1;
+    }
+
+    .report-summary-header {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
