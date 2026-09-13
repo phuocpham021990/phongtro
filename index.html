@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Quản Lý Phòng Trọ - PHẠM HỒNG PHƯỚC</title>
-    <!-- Đuôi ?v=3 giúp ép trình duyệt điện thoại xóa cache và tải CSS mới lập tức -->
-    <link rel="stylesheet" href="style.css?v=3">
-    <!-- Thư viện hỗ trợ xuất file Excel -->
+    <title>PHÒNG TRỌ PHẠM HỒNG PHƯỚC</title>
+    <!-- Thêm đuôi ?v=10 để bắt buộc trình duyệt điện thoại tải CSS mới -->
+    <link rel="stylesheet" href="style.css?v=10">
+    <!-- Thư viện xuất Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -14,8 +14,8 @@
         <h1>PHÒNG TRỌ PHẠM HỒNG PHƯỚC</h1>
         
         <!-- Form Thêm Phòng -->
-        <form id="addRoomForm" class="form-inline">
-            <input type="text" id="newRoomName" placeholder="Tên phòng (VD: Phòng 101)" required>
+        <form id="addRoomForm" class="form-inline" onsubmit="handleAddRoom(event)">
+            <input type="text" id="newRoomName" placeholder="Tên phòng (VD: Phòng 01)" required>
             <input type="number" id="newRoomPrice" placeholder="Giá phòng mặc định (VNĐ)" required>
             <button type="submit">+ Thêm Phòng</button>
         </form>
@@ -54,23 +54,23 @@
 
             <!-- Thanh Chuyển Tab -->
             <div class="tab-bar">
-                <button class="tab-btn active" onclick="openTab('tabTenants')">1. Con người</button>
-                <button class="tab-btn" onclick="openTab('tabBilling')">2. Tiền phòng</button>
-                <button class="tab-btn" onclick="openTab('tabEquipment')">3. Thiết bị</button>
-                <button class="tab-btn" onclick="openTab('tabContract')">4. Hợp đồng</button>
+                <button class="tab-btn active" id="tabBtn1" onclick="openTab('tabTenants', this)">1. Con người</button>
+                <button class="tab-btn" id="tabBtn2" onclick="openTab('tabBilling', this)">2. Tiền phòng</button>
+                <button class="tab-btn" id="tabBtn3" onclick="openTab('tabEquipment', this)">3. Thiết bị</button>
+                <button class="tab-btn" id="tabBtn4" onclick="openTab('tabContract', this)">4. Hợp đồng</button>
             </div>
 
             <!-- TAB 1: QUẢN LÝ CON NGƯỜI -->
             <div id="tabTenants" class="tab-content active">
                 <h3 id="tenantFormTitle">Thêm người ở mới</h3>
-                <form id="tenantForm" class="grid-form">
+                <form id="tenantForm" class="grid-form" onsubmit="handleSaveTenant(event)">
                     <input type="hidden" id="editingTenantIndex" value="-1">
                     <input type="text" id="tenantName" placeholder="Họ và tên" required>
                     <input type="number" id="tenantBirth" placeholder="Năm sinh" required>
                     <input type="text" id="tenantCCCD" placeholder="Số CCCD" required>
                     <input type="text" id="tenantRole" placeholder="Định danh (Chủ hộ/Ở ghép)" required>
                     <div class="file-input-group">
-                        <label>Ảnh giấy tờ (CCCD/Hợp đồng):</label>
+                        <label style="font-size: 12px; display: block; margin-bottom: 2px;">Ảnh giấy tờ (CCCD/Hợp đồng):</label>
                         <input type="file" id="tenantDocImg" accept="image/*">
                     </div>
                     <div class="form-btn-group">
@@ -80,13 +80,13 @@
                 </form>
 
                 <h3>Danh sách người đang ở</h3>
-                <div id="tenantList" class="cards-list"></div>
+                <div id="tenantList" class="cards-list" style="margin-top: 10px;"></div>
             </div>
 
             <!-- TAB 2: QUẢN LÝ TIỀN PHÒNG -->
             <div id="tabBilling" class="tab-content">
                 <div class="billing-form">
-                    <div class="form-group">
+                    <div class="form-group" style="margin-bottom: 10px;">
                         <label>Đơn giá điện (VNĐ/kWh):</label>
                         <input type="number" id="priceElec" value="3000" oninput="calculateTotalBill()">
                     </div>
@@ -134,43 +134,42 @@
             </div>
 
             <!-- TAB 3: QUẢN LÝ TRANG THIẾT BỊ -->
-            <!-- TAB 3: QUẢN LÝ TRANG THIẾT BỊ -->
-<div id="tabEquipment" class="tab-content">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-        <h3 id="equipFormTitle" style="margin: 0;">Thêm / Thay thế thiết bị</h3>
-        <button type="button" onclick="copyEquipmentToOtherRooms()" class="btn-action btn-excel" style="padding: 8px 12px; font-size: 13px;">📋 Áp dụng thiết bị sang phòng khác</button>
-    </div>
+            <div id="tabEquipment" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                    <h3 id="equipFormTitle" style="margin: 0;">Thêm / Thay thế thiết bị</h3>
+                    <button type="button" onclick="copyEquipmentToOtherRooms()" class="btn-action btn-excel" style="padding: 8px 12px; font-size: 13px;">📋 Áp dụng thiết bị sang phòng khác</button>
+                </div>
 
-    <form id="equipForm" class="grid-form">
-        <input type="hidden" id="editingEquipIndex" value="-1">
-        <input type="text" id="equipName" placeholder="Tên thiết bị trong phòng" required>
-        <input type="text" id="replaceName" placeholder="Thiết bị thay (nếu có)">
-        <input type="date" id="replaceDate">
-        <input type="number" id="equipQty" placeholder="Số lượng" value="1" min="1" required>
-        <input type="number" id="equipUnitPrice" placeholder="Đơn giá (VNĐ)" required>
-        <div class="form-btn-group">
-            <button type="submit" id="btnSaveEquip" class="btn-primary">+ Thêm thiết bị</button>
-            <button type="button" id="btnCancelEquip" class="btn-secondary hidden" onclick="resetEquipForm()">Hủy sửa</button>
-        </div>
-    </form>
+                <form id="equipForm" class="grid-form" onsubmit="handleSaveEquip(event)">
+                    <input type="hidden" id="editingEquipIndex" value="-1">
+                    <input type="text" id="equipName" placeholder="Tên thiết bị" required>
+                    <input type="text" id="replaceName" placeholder="Thiết bị thay (nếu có)">
+                    <input type="date" id="replaceDate">
+                    <input type="number" id="equipQty" placeholder="Số lượng" value="1" min="1" required>
+                    <input type="number" id="equipUnitPrice" placeholder="Đơn giá (VNĐ)" required>
+                    <div class="form-btn-group">
+                        <button type="submit" id="btnSaveEquip" class="btn-primary">+ Thêm thiết bị</button>
+                        <button type="button" id="btnCancelEquip" class="btn-secondary hidden" onclick="resetEquipForm()">Hủy sửa</button>
+                    </div>
+                </form>
 
-    <div class="table-responsive">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Tên thiết bị</th>
-                    <th>Thiết bị thay</th>
-                    <th>Thời gian</th>
-                    <th>SL</th>
-                    <th>Đơn giá</th>
-                    <th>Thành tiền</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody id="equipTableBody"></tbody>
-        </table>
-    </div>
-</div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tên thiết bị</th>
+                                <th>Thiết bị thay</th>
+                                <th>Thời gian</th>
+                                <th>SL</th>
+                                <th>Đơn giá</th>
+                                <th>Thành tiền</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
 
             <!-- TAB 4: HỢP ĐỒNG & TIỀN CỌC -->
             <div id="tabContract" class="tab-content">
@@ -209,10 +208,9 @@
                 <h2>Phiếu Thu Tiền Phòng</h2>
                 <button class="btn-close" onclick="closeReceiptModal()">&times;</button>
             </div>
-            <div id="receiptPreview" class="receipt-box"></div>
-            <div class="action-btn-group">
+            <div id="receiptPreview" class="receipt-box" style="white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;"></div>
+            <div class="action-btn-group" style="margin-top: 15px;">
                 <button type="button" class="btn-zalo" onclick="copyZaloText()">📋 Copy gửi Zalo</button>
-                <button type="button" class="btn-print" onclick="printReceipt()">🖨️ In / PDF</button>
             </div>
         </div>
     </div>
@@ -253,6 +251,7 @@
         </div>
     </div>
 
-  <script src="script.js?v=2"></script>
+    <!-- Gọi Script có đuôi xóa cache ?v=10 -->
+    <script src="script.js?v=10"></script>
 </body>
 </html>
