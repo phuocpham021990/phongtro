@@ -723,9 +723,13 @@ document.getElementById('addRoomForm')?.addEventListener('submit', function(e) {
     document.getElementById('addRoomForm').reset();
     renderRoomGrid();
 });
+
 // Hàm sao chép danh sách thiết bị từ phòng hiện tại sang các phòng khác
 function copyEquipmentToOtherRooms() {
-    if (currentRoomIndex === null || currentRoomIndex === undefined) return;
+    if (typeof currentRoomIndex === 'undefined' || currentRoomIndex === null || currentRoomIndex < 0) {
+        alert("Vui lòng mở một phòng cụ thể trước khi sử dụng tính năng này!");
+        return;
+    }
 
     const currentRoom = rooms[currentRoomIndex];
     if (!currentRoom.equipments || currentRoom.equipments.length === 0) {
@@ -733,11 +737,10 @@ function copyEquipmentToOtherRooms() {
         return;
     }
 
-    // Tạo danh sách các phòng còn lại để người dùng chọn
     let roomOptionsText = "Nhập danh sách tên phòng bạn muốn áp dụng (phân cách bằng dấu phẩy).\nHoặc gõ 'ALL' để áp dụng cho TẤT CẢ các phòng khác:\n\nVí dụ: Phòng 102, Phòng 103";
     let targetInput = prompt(roomOptionsText);
 
-    if (!targetInput) return; // Người dùng nhấn Hủy
+    if (!targetInput) return;
 
     targetInput = targetInput.trim();
     let updatedCount = 0;
@@ -746,14 +749,12 @@ function copyEquipmentToOtherRooms() {
         if (confirm(`Bạn có chắc chắn muốn chép toàn bộ ${currentRoom.equipments.length} thiết bị từ [${currentRoom.name}] sang TẤT CẢ các phòng khác không?`)) {
             rooms.forEach((room, idx) => {
                 if (idx !== currentRoomIndex) {
-                    // Sao chép sâu (Deep copy) danh sách thiết bị sang phòng khác
                     room.equipments = JSON.parse(JSON.stringify(currentRoom.equipments));
                     updatedCount++;
                 }
             });
         }
     } else {
-        // Tách danh sách tên phòng người dùng nhập theo dấu phẩy
         let targetRoomNames = targetInput.split(',').map(name => name.trim().toLowerCase());
 
         rooms.forEach((room, idx) => {
@@ -765,10 +766,20 @@ function copyEquipmentToOtherRooms() {
     }
 
     if (updatedCount > 0) {
-        saveRoomsToStorage(); // Lưu lại vào localStorage
+        if (typeof saveRoomsToStorage === 'function') {
+            saveRoomsToStorage();
+        } else if (typeof saveToLocalStorage === 'function') {
+            saveToLocalStorage();
+        } else {
+            localStorage.setItem('roomsData', JSON.stringify(rooms));
+        }
+        
+        if (typeof renderRooms === 'function') renderRooms();
+        if (typeof renderEquipments === 'function') renderEquipments();
+
         alert(`Đã sao chép thành công danh sách thiết bị sang ${updatedCount} phòng!`);
     } else {
-        alert("Không tìm thấy phòng phù hợp hoặc không có thay đổi nào được thực hiện!");
+        alert("Không tìm thấy tên phòng phù hợp hoặc không có thay đổi nào!");
     }
 }
 // KHỞI ĐỘNG HỆ THỐNG
