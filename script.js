@@ -390,20 +390,40 @@ function deleteEquip(i) {
     }
 }
 
-// HÀM ÁP DỤNG THIẾT BỊ SANG PHÒNG KHÁC
+// HÀM ÁP DỤNG THIẾT BỊ SANG PHÒNG KHÁC (TỰ ĐỘNG NHẬN DẠNG PHÒNG ĐANG MỞ)
 function copyEquipmentToOtherRooms() {
-    if (currentRoomIndex === null || currentRoomIndex === undefined || currentRoomIndex < 0) {
-        alert("Vui lòng mở một phòng cụ thể trước khi thực hiện!");
+    // 1. Tự động lấy tên phòng từ tiêu đề hiển thị (Ví dụ: "Chi tiết PHÒNG 03")
+    const titleText = document.getElementById('modalRoomTitle')?.innerText || '';
+    
+    // Tìm phòng trong danh sách khớp với tiêu đề đang mở
+    let currentRoom = null;
+    let curIdx = -1;
+
+    if (typeof currentRoomIndex !== 'undefined' && currentRoomIndex !== null && currentRoomIndex >= 0 && rooms[currentRoomIndex]) {
+        currentRoom = rooms[currentRoomIndex];
+        curIdx = currentRoomIndex;
+    } else {
+        // Tự động tìm phòng theo tên trên tiêu đề nếu biến currentRoomIndex bị trống
+        curIdx = rooms.findIndex(r => titleText.includes(r.name));
+        if (curIdx >= 0) {
+            currentRoom = rooms[curIdx];
+            currentRoomIndex = curIdx; // Cập nhật lại vị trí phòng
+        }
+    }
+
+    if (!currentRoom) {
+        alert("Không xác định được phòng hiện tại. Vui lòng đóng bảng này và bấm mở lại phòng!");
         return;
     }
 
-    const currentRoom = rooms[currentRoomIndex];
+    // 2. Kiểm tra xem phòng hiện tại đã có thiết bị nào chưa
     if (!currentRoom.equipments || currentRoom.equipments.length === 0) {
-        alert("Phòng này hiện chưa có thiết bị nào để sao chép!");
+        alert(`[${currentRoom.name}] hiện chưa có thiết bị nào trong danh sách bên dưới để sao chép! Hãy thêm ít nhất 1 thiết bị trước.`);
         return;
     }
 
-    let targetInput = prompt("Nhập tên các phòng bạn muốn áp dụng (cách nhau bởi dấu phẩy).\nHoặc gõ 'ALL' để áp dụng cho TẤT CẢ các phòng khác:\n\nVí dụ: Phòng 02, Phòng 03");
+    // 3. Hỏi danh sách phòng cần áp dụng
+    let targetInput = prompt(`Đang sao chép thiết bị từ [${currentRoom.name}].\n\nNhập tên các phòng nhận (phân cách bằng dấu phẩy).\nHoặc gõ 'ALL' để áp dụng cho TẤT CẢ các phòng khác:\n\nVí dụ: Phòng 01, Phòng 02`);
     if (!targetInput) return;
 
     targetInput = targetInput.trim();
@@ -412,7 +432,7 @@ function copyEquipmentToOtherRooms() {
     if (targetInput.toUpperCase() === 'ALL') {
         if (confirm(`Xác nhận chép toàn bộ ${currentRoom.equipments.length} thiết bị từ [${currentRoom.name}] sang TẤT CẢ các phòng còn lại?`)) {
             rooms.forEach((room, idx) => {
-                if (idx !== currentRoomIndex) {
+                if (idx !== curIdx) {
                     room.equipments = JSON.parse(JSON.stringify(currentRoom.equipments));
                     updatedCount++;
                 }
@@ -421,7 +441,7 @@ function copyEquipmentToOtherRooms() {
     } else {
         let targetNames = targetInput.split(',').map(n => n.trim().toLowerCase());
         rooms.forEach((room, idx) => {
-            if (idx !== currentRoomIndex && targetNames.includes(room.name.toLowerCase())) {
+            if (idx !== curIdx && targetNames.includes(room.name.toLowerCase())) {
                 room.equipments = JSON.parse(JSON.stringify(currentRoom.equipments));
                 updatedCount++;
             }
@@ -432,10 +452,9 @@ function copyEquipmentToOtherRooms() {
         saveRoomsToStorage();
         alert(`Đã sao chép thành công danh sách thiết bị sang ${updatedCount} phòng!`);
     } else {
-        alert("Không tìm thấy tên phòng khớp với danh sách bạn nhập!");
+        alert("Không tìm thấy tên phòng khớp với danh sách bạn nhập (Lưu ý gõ đúng tên ví dụ: Phòng 01, Phòng 02)!");
     }
 }
-
 // ==========================================
 // TAB 4: QUẢN LÝ HỢP ĐỒNG (CONTRACT)
 // ==========================================
