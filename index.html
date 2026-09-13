@@ -134,38 +134,43 @@
             </div>
 
             <!-- TAB 3: QUẢN LÝ TRANG THIẾT BỊ -->
-            <div id="tabEquipment" class="tab-content">
-                <h3 id="equipFormTitle">Thêm / Thay thế thiết bị</h3>
-                <form id="equipForm" class="grid-form">
-                    <input type="hidden" id="editingEquipIndex" value="-1">
-                    <input type="text" id="equipName" placeholder="Tên thiết bị trong phòng" required>
-                    <input type="text" id="replaceName" placeholder="Thiết bị thay (nếu có)">
-                    <input type="date" id="replaceDate">
-                    <input type="number" id="equipQty" placeholder="Số lượng" value="1" min="1" required>
-                    <input type="number" id="equipUnitPrice" placeholder="Đơn giá (VNĐ)" required>
-                    <div class="form-btn-group">
-                        <button type="submit" id="btnSaveEquip" class="btn-primary">+ Thêm thiết bị</button>
-                        <button type="button" id="btnCancelEquip" class="btn-secondary hidden" onclick="resetEquipForm()">Hủy sửa</button>
-                    </div>
-                </form>
+            <!-- TAB 3: QUẢN LÝ TRANG THIẾT BỊ -->
+<div id="tabEquipment" class="tab-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+        <h3 id="equipFormTitle" style="margin: 0;">Thêm / Thay thế thiết bị</h3>
+        <button type="button" onclick="copyEquipmentToOtherRooms()" class="btn-action btn-excel" style="padding: 8px 12px; font-size: 13px;">📋 Áp dụng thiết bị sang phòng khác</button>
+    </div>
 
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Tên thiết bị</th>
-                                <th>Thiết bị thay</th>
-                                <th>Thời gian</th>
-                                <th>SL</th>
-                                <th>Đơn giá</th>
-                                <th>Thành tiền</th>
-                                <th>Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="equipTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
+    <form id="equipForm" class="grid-form">
+        <input type="hidden" id="editingEquipIndex" value="-1">
+        <input type="text" id="equipName" placeholder="Tên thiết bị trong phòng" required>
+        <input type="text" id="replaceName" placeholder="Thiết bị thay (nếu có)">
+        <input type="date" id="replaceDate">
+        <input type="number" id="equipQty" placeholder="Số lượng" value="1" min="1" required>
+        <input type="number" id="equipUnitPrice" placeholder="Đơn giá (VNĐ)" required>
+        <div class="form-btn-group">
+            <button type="submit" id="btnSaveEquip" class="btn-primary">+ Thêm thiết bị</button>
+            <button type="button" id="btnCancelEquip" class="btn-secondary hidden" onclick="resetEquipForm()">Hủy sửa</button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Tên thiết bị</th>
+                    <th>Thiết bị thay</th>
+                    <th>Thời gian</th>
+                    <th>SL</th>
+                    <th>Đơn giá</th>
+                    <th>Thành tiền</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="equipTableBody"></tbody>
+        </table>
+    </div>
+</div>
 
             <!-- TAB 4: HỢP ĐỒNG & TIỀN CỌC -->
             <div id="tabContract" class="tab-content">
