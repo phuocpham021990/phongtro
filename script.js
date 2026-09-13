@@ -3,7 +3,6 @@
 // ==========================================
 const STORAGE_KEY = 'phongtro_rooms';
 
-// Lấy dữ liệu từ cả 2 khóa để tránh mất dữ liệu cũ trên thiết bị
 let rawData = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('rooms') || localStorage.getItem('phongtro_data');
 let rooms = [];
 
@@ -13,7 +12,7 @@ try {
     rooms = [];
 }
 
-// Nếu chưa có dữ liệu nào, khởi tạo danh sách phòng mặc định ban đầu
+// Danh sách phòng mặc định ban đầu nếu bộ nhớ trống
 if (!Array.isArray(rooms) || rooms.length === 0) {
     rooms = [
         { name: "Phòng 01", price: 2000000, tenants: [], billing: { priceElec: 3000, oldElec: 0, newElec: 0, roomRent: 2000000, waterFee: 50000, garbageFee: 20000, surchargeFee: 0 }, equipments: [], contract: { depositAmount: 2000000, startDate: "", contractMonths: 12, contractNote: "" } },
@@ -23,22 +22,17 @@ if (!Array.isArray(rooms) || rooms.length === 0) {
 
 let currentRoomIndex = null;
 
-// Hàm tự động kiểm tra & sửa lỗi dữ liệu bị undefined / thiếu tên & giá phòng
+// Hàm kiểm tra & sửa lỗi dữ liệu bị undefined / rỗng
 function sanitizeAndRepairData() {
     if (!Array.isArray(rooms)) return;
 
     rooms.forEach((room, index) => {
-        // Tự động khôi phục tên phòng nếu bị undefined hoặc rỗng
         if (!room.name || room.name === 'undefined' || room.name.trim() === '') {
             room.name = `Phòng ${String(index + 1).padStart(2, '0')}`;
         }
-        
-        // Tự động khôi phục giá phòng nếu bị 0đ hoặc undefined
         if (!room.price || isNaN(room.price) || Number(room.price) === 0) {
             room.price = room.billing?.roomRent || 1500000;
         }
-
-        // Đảm bảo có đầy đủ cấu trúc mảng & đối tượng phụ
         if (!Array.isArray(room.tenants)) room.tenants = [];
         if (!Array.isArray(room.equipments)) room.equipments = [];
         if (!room.billing) {
@@ -46,23 +40,21 @@ function sanitizeAndRepairData() {
         } else if (!room.billing.roomRent || Number(room.billing.roomRent) === 0) {
             room.billing.roomRent = room.price;
         }
-
         if (!room.contract) {
             room.contract = { depositAmount: room.price, startDate: "", contractMonths: 12, contractNote: "" };
         }
     });
 }
 
-// Hàm lưu dữ liệu an toàn vào LocalStorage
+// Lưu dữ liệu vào LocalStorage
 function saveRoomsToStorage() {
     sanitizeAndRepairData();
     const dataStr = JSON.stringify(rooms);
     localStorage.setItem(STORAGE_KEY, dataStr);
-    localStorage.setItem('rooms', dataStr); // Lưu song song để hỗ trợ code cũ
+    localStorage.setItem('rooms', dataStr);
     renderRooms();
 }
 
-// Khởi chạy ứng dụng khi tải trang
 document.addEventListener('DOMContentLoaded', () => {
     sanitizeAndRepairData();
     saveRoomsToStorage();
@@ -88,11 +80,9 @@ function renderRooms() {
         const tenantCount = room.tenants ? room.tenants.length : 0;
         const isOccupied = tenantCount > 0;
 
-        // Lọc trạng thái phòng
         if (statusFilter === 'OCCUPIED' && !isOccupied) return;
         if (statusFilter === 'EMPTY' && isOccupied) return;
 
-        // Lọc theo từ khóa (Tên phòng, tên người ở, CCCD)
         if (searchText) {
             const matchRoom = room.name.toLowerCase().includes(searchText);
             const matchTenant = room.tenants && room.tenants.some(t => (t.name && t.name.toLowerCase().includes(searchText)) || (t.cccd && t.cccd.includes(searchText)));
@@ -116,7 +106,7 @@ function renderRooms() {
             <p style="margin:8px 0; font-weight:bold; color:#0068ff;">${formatVND(room.price)}/tháng</p>
             <p style="margin:0; font-size:12px; color:#666;">👤 ${tenantCount} người ở</p>
             <div style="margin-top:10px; display:flex; gap:5px;" onclick="event.stopPropagation()">
-                <button onclick="renameRoom(${index})" style="flex:1; padding:4px; font-size:11px; background:#ffc107; border:none; border-radius:3px; cursor:pointer;">✏️ Sửa tên</button>
+                <button onclick="editRoomInfo(${index})" style="flex:1; padding:4px; font-size:11px; background:#ffc107; border:none; border-radius:3px; cursor:pointer;">✏️ Sửa phòng</button>
                 <button onclick="deleteRoom(${index})" style="flex:1; padding:4px; font-size:11px; background:#dc3545; color:white; border:none; border-radius:3px; cursor:pointer;">🗑️ Xóa</button>
             </div>
         `;
@@ -152,12 +142,32 @@ function handleAddRoom(e) {
     document.getElementById('addRoomForm').reset();
 }
 
-function renameRoom(index) {
-    const newName = prompt("Nhập tên mới cho phòng:", rooms[index].name);
-    if (newName && newName.trim()) {
-        rooms[index].name = newName.trim();
-        saveRoomsToStorage();
+// SỬA ĐỒNG THỜI TÊN PHÒNG VÀ GIÁ PHÒNG MẶC ĐỊNH
+function editRoomInfo(index) {
+    const room = rooms[index];
+    
+    // Bước 1: Nhập tên phòng mới
+    const newName = prompt("Nhập TÊN PHÒNG mới:", room.name);
+    if (newName === null) return; // Người dùng nhấn Hủy
+
+    // Bước 2: Nhập giá phòng mới
+    const newPriceInput = prompt("Nhập GIÁ PHÒNG MẶC ĐỊNH mới (VNĐ):", room.price);
+    if (newPriceInput === null) return; // Người dùng nhấn Hủy
+
+    const finalName = newName.trim() || room.name;
+    const finalPrice = Number(newPriceInput) || room.price;
+
+    // Cập nhật tên phòng và giá phòng gốc
+    rooms[index].name = finalName;
+    rooms[index].price = finalPrice;
+
+    // Cập nhật cả tiền phòng trong phần hóa đơn nếu chưa được chốt riêng
+    if (rooms[index].billing) {
+        rooms[index].billing.roomRent = finalPrice;
     }
+
+    saveRoomsToStorage();
+    alert(`Đã cập nhật thông tin [${finalName}]!\nGiá phòng mới: ${formatVND(finalPrice)}`);
 }
 
 function deleteRoom(index) {
@@ -333,7 +343,6 @@ function saveBillingData() {
         priceElec: calc.priceElec, oldElec: calc.oldElec, newElec: calc.newElec,
         roomRent: calc.roomRent, waterFee: calc.waterFee, garbageFee: calc.garbageFee, surchargeFee: calc.surchargeFee
     };
-    // Đồng bộ lại giá phòng nếu được cập nhật ở tab tiền phòng
     if (calc.roomRent > 0) {
         rooms[currentRoomIndex].price = calc.roomRent;
     }
@@ -544,7 +553,6 @@ function saveContractData() {
 // THAO TÁC HỆ THỐNG: CHỐT KỲ, SAO LƯU, PHỤC HỒI
 // ==========================================
 
-// Chốt kỳ điện nước (Số Mới -> Số Cũ)
 function advanceAllElectricityMeters() {
     if (confirm("Xác nhận chốt kỳ mới? Toàn bộ Số điện mới sẽ được chuyển thành Số điện cũ cho tất cả các phòng.")) {
         rooms.forEach(r => {
@@ -557,7 +565,6 @@ function advanceAllElectricityMeters() {
     }
 }
 
-// Sao lưu file JSON
 function exportBackupJSON() {
     sanitizeAndRepairData();
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rooms, null, 2));
@@ -569,7 +576,6 @@ function exportBackupJSON() {
     downloadAnchor.remove();
 }
 
-// Phục hồi dữ liệu từ file JSON
 function importBackupJSON(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -582,7 +588,7 @@ function importBackupJSON(event) {
                 rooms = importedData;
                 sanitizeAndRepairData();
                 saveRoomsToStorage();
-                alert("Đã phục hồi dữ liệu thành công! Tên phòng và thông tin người ở đã được khôi phục chuẩn xác.");
+                alert("Đã phục hồi dữ liệu thành công!");
             } else {
                 alert("File sao lưu không đúng định dạng!");
             }
@@ -593,7 +599,6 @@ function importBackupJSON(event) {
     reader.readAsText(file);
 }
 
-// Xuất Danh sách Tạm trú ra Excel
 function exportAllTenantsToExcel() {
     if (typeof XLSX === 'undefined') {
         alert("Chưa tải xong thư viện Excel, vui lòng kiểm tra kết nối mạng!");
@@ -626,7 +631,6 @@ function exportAllTenantsToExcel() {
     XLSX.writeFile(workbook, `Danh_Sach_Tam_Tru_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
-// Báo cáo doanh thu & Xuất hóa đơn Excel
 function openGlobalReportModal() {
     const tbody = document.getElementById('reportTableBody');
     if (!tbody) return;
