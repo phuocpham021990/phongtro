@@ -1,22 +1,66 @@
 // ==========================================
-// KHO KHỞI TẠO DỮ LIỆU CƠ SỞ (LOCALSTORAGE)
+// KHO KHỔI TẠO DỮ LIỆU CƠ SỞ (ĐỒNG BỘ NGUYÊN NGHĨA)
 // ==========================================
-let rooms = JSON.parse(localStorage.getItem('phongtro_rooms')) || [
-    { name: "Phòng 01", price: 2000000, tenants: [], billing: { priceElec: 3000, oldElec: 0, newElec: 0, roomRent: 2000000, waterFee: 50000, garbageFee: 20000, surchargeFee: 0 }, equipments: [], contract: { depositAmount: 2000000, startDate: "", contractMonths: 12, contractNote: "" } },
-    { name: "Phòng 02", price: 1400000, tenants: [], billing: { priceElec: 3000, oldElec: 0, newElec: 0, roomRent: 1400000, waterFee: 50000, garbageFee: 20000, surchargeFee: 0 }, equipments: [], contract: { depositAmount: 1400000, startDate: "", contractMonths: 12, contractNote: "" } }
-];
+const STORAGE_KEY = 'phongtro_rooms';
+
+// Lấy dữ liệu từ cả 2 khóa để tránh mất dữ liệu cũ
+let rawData = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('rooms');
+let rooms = [];
+
+try {
+    rooms = rawData ? JSON.parse(rawData) : [];
+} catch (e) {
+    rooms = [];
+}
+
+// Nếu chưa có dữ liệu nào, khởi tạo danh sách mẫu
+if (!Array.isArray(rooms) || rooms.length === 0) {
+    rooms = [
+        { name: "Phòng 01", price: 2000000, tenants: [], billing: { priceElec: 3000, oldElec: 0, newElec: 0, roomRent: 2000000, waterFee: 50000, garbageFee: 20000, surchargeFee: 0 }, equipments: [], contract: { depositAmount: 2000000, startDate: "", contractMonths: 12, contractNote: "" } },
+        { name: "Phòng 02", price: 1400000, tenants: [], billing: { priceElec: 3000, oldElec: 0, newElec: 0, roomRent: 1400000, waterFee: 50000, garbageFee: 20000, surchargeFee: 0 }, equipments: [], contract: { depositAmount: 1400000, startDate: "", contractMonths: 12, contractNote: "" } }
+    ];
+}
 
 let currentRoomIndex = null;
 
-// Hàm lưu dữ liệu vào LocalStorage
+// Hàm tự động kiểm tra & vá lỗi dữ liệu bị undefined/thiếu thuộc tính
+function sanitizeAndRepairData() {
+    if (!Array.isArray(rooms)) return;
+
+    rooms.forEach((room, index) => {
+        // Vá lỗi tên phòng undefined
+        if (!room.name || room.name === 'undefined') {
+            room.name = `Phòng ${String(index + 1).padStart(2, '0')}`;
+        }
+        // Vá lỗi giá phòng 0đ hoặc undefined
+        if (!room.price || isNaN(room.price)) {
+            room.price = room.billing?.roomRent || 1500000;
+        }
+        // Đảm bảo có đầy đủ các mảng phụ
+        if (!Array.isArray(room.tenants)) room.tenants = [];
+        if (!Array.isArray(room.equipments)) room.equipments = [];
+        if (!room.billing) {
+            room.billing = { priceElec: 3000, oldElec: 0, newElec: 0, roomRent: room.price, waterFee: 50000, garbageFee: 20000, surchargeFee: 0 };
+        }
+        if (!room.contract) {
+            room.contract = { depositAmount: room.price, startDate: "", contractMonths: 12, contractNote: "" };
+        }
+    });
+}
+
+// Hàm lưu dữ liệu vào LocalStorage (Lưu cả 2 khóa để đảm bảo tuyệt đối)
 function saveRoomsToStorage() {
-    localStorage.setItem('phongtro_rooms', JSON.stringify(rooms));
+    sanitizeAndRepairData();
+    const dataStr = JSON.stringify(rooms);
+    localStorage.setItem(STORAGE_KEY, dataStr);
+    localStorage.setItem('rooms', dataStr); // Lưu phòng ngừa cho mã cũ
     renderRooms();
 }
 
 // Khởi chạy ứng dụng khi tải trang
 document.addEventListener('DOMContentLoaded', () => {
-    renderRooms();
+    sanitizeAndRepairData();
+    saveRoomsToStorage();
 });
 
 // Định dạng tiền tệ VNĐ
@@ -46,7 +90,7 @@ function renderRooms() {
         // Lọc từ khóa tìm kiếm (Tên phòng, Tên người ở, CCCD)
         if (searchText) {
             const matchRoom = room.name.toLowerCase().includes(searchText);
-            const matchTenant = room.tenants && room.tenants.some(t => t.name.toLowerCase().includes(searchText) || t.cccd.includes(searchText));
+            const matchTenant = room.tenants && room.tenants.some(t => (t.name && t.name.toLowerCase().includes(searchText)) || (t.cccd && t.cccd.includes(searchText)));
             if (!matchRoom && !matchTenant) return;
         }
 
@@ -58,7 +102,7 @@ function renderRooms() {
         `;
 
         card.innerHTML = `
-            <div style="display:flex; justify-shadow:space-between; align-items:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h3 style="margin:0; font-size:16px;">${room.name}</h3>
                 <span style="font-size:11px; padding:2px 6px; border-radius:4px; color:white; background:${isOccupied ? '#d9534f' : '#28a745'}">
                     ${isOccupied ? 'ĐÃ THUÊ' : 'TRỐNG'}
@@ -151,7 +195,10 @@ function openTab(tabId, btnElement) {
 // ==========================================
 function renderTenants() {
     const list = document.getElementById('tenantList');
+    if (!list) return;
     list.innerHTML = '';
+
+    if (currentRoomIndex === null || !rooms[currentRoomIndex]) return;
     const tenants = rooms[currentRoomIndex].tenants || [];
 
     if (tenants.length === 0) {
@@ -164,8 +211,8 @@ function renderTenants() {
         item.style.cssText = "background:#f8f9fa; padding:10px; border-radius:6px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;";
         item.innerHTML = `
             <div>
-                <strong>${t.name}</strong> (${t.birth || 'N/A'}) - <span style="color:#0068ff">${t.role}</span>
-                <br><small>CCCD: ${t.cccd}</small>
+                <strong>${t.name || 'Chưa nhập tên'}</strong> (${t.birth || 'N/A'}) - <span style="color:#0068ff">${t.role || 'Ở ghép'}</span>
+                <br><small>CCCD: ${t.cccd || 'N/A'}</small>
                 ${t.docImg ? `<br><a href="${t.docImg}" target="_blank" style="font-size:11px; color:#28a745;">🖼️ Xem ảnh CCCD/HĐ</a>` : ''}
             </div>
             <div>
@@ -211,10 +258,10 @@ function handleSaveTenant(e) {
 
 function editTenant(i) {
     const t = rooms[currentRoomIndex].tenants[i];
-    document.getElementById('tenantName').value = t.name;
-    document.getElementById('tenantBirth').value = t.birth;
-    document.getElementById('tenantCCCD').value = t.cccd;
-    document.getElementById('tenantRole').value = t.role;
+    document.getElementById('tenantName').value = t.name || '';
+    document.getElementById('tenantBirth').value = t.birth || '';
+    document.getElementById('tenantCCCD').value = t.cccd || '';
+    document.getElementById('tenantRole').value = t.role || '';
     document.getElementById('editingTenantIndex').value = i;
     document.getElementById('btnSaveTenant').innerText = "Cập nhật";
     document.getElementById('btnCancelTenant').classList.remove('hidden');
@@ -239,11 +286,12 @@ function deleteTenant(i) {
 // TAB 2: QUẢN LÝ TIỀN PHÒNG (BILLING)
 // ==========================================
 function loadBillingForm() {
+    if (currentRoomIndex === null || !rooms[currentRoomIndex]) return;
     const b = rooms[currentRoomIndex].billing || {};
     document.getElementById('priceElec').value = b.priceElec || 3000;
     document.getElementById('oldElec').value = b.oldElec || 0;
     document.getElementById('newElec').value = b.newElec || 0;
-    document.getElementById('roomRent').value = b.roomRent || rooms[currentRoomIndex].price;
+    document.getElementById('roomRent').value = b.roomRent || rooms[currentRoomIndex].price || 0;
     document.getElementById('waterFee').value = b.waterFee || 50000;
     document.getElementById('garbageFee').value = b.garbageFee || 20000;
     document.getElementById('surchargeFee').value = b.surchargeFee || 0;
@@ -252,23 +300,26 @@ function loadBillingForm() {
 }
 
 function calculateTotalBill() {
-    const priceElec = Number(document.getElementById('priceElec').value) || 0;
-    const oldElec = Number(document.getElementById('oldElec').value) || 0;
-    const newElec = Number(document.getElementById('newElec').value) || 0;
-    const roomRent = Number(document.getElementById('roomRent').value) || 0;
-    const waterFee = Number(document.getElementById('waterFee').value) || 0;
-    const garbageFee = Number(document.getElementById('garbageFee').value) || 0;
-    const surchargeFee = Number(document.getElementById('surchargeFee').value) || 0;
+    const priceElec = Number(document.getElementById('priceElec')?.value) || 0;
+    const oldElec = Number(document.getElementById('oldElec')?.value) || 0;
+    const newElec = Number(document.getElementById('newElec')?.value) || 0;
+    const roomRent = Number(document.getElementById('roomRent')?.value) || 0;
+    const waterFee = Number(document.getElementById('waterFee')?.value) || 0;
+    const garbageFee = Number(document.getElementById('garbageFee')?.value) || 0;
+    const surchargeFee = Number(document.getElementById('surchargeFee')?.value) || 0;
 
     const elecKwh = Math.max(0, newElec - oldElec);
     const elecTotal = elecKwh * priceElec;
     const grandTotal = roomRent + elecTotal + waterFee + garbageFee + surchargeFee;
 
-    document.getElementById('grandTotalDisplay').innerText = formatVND(grandTotal);
+    const display = document.getElementById('grandTotalDisplay');
+    if (display) display.innerText = formatVND(grandTotal);
+
     return { elecKwh, elecTotal, grandTotal, roomRent, waterFee, garbageFee, surchargeFee, priceElec, oldElec, newElec };
 }
 
 function saveBillingData() {
+    if (currentRoomIndex === null || !rooms[currentRoomIndex]) return;
     const calc = calculateTotalBill();
     rooms[currentRoomIndex].billing = {
         priceElec: calc.priceElec, oldElec: calc.oldElec, newElec: calc.newElec,
@@ -314,21 +365,24 @@ function copyZaloText() {
 }
 
 // ==========================================
-// TAB 3: QUẢN LÝ TRANG THIẾT BỊ & ÁP DỤNG HÀNG LOẠT
+// TAB 3: QUẢN LÝ TRANG THIẾT BỊ
 // ==========================================
 function renderEquipments() {
     const tbody = document.getElementById('equipTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
+
+    if (currentRoomIndex === null || !rooms[currentRoomIndex]) return;
     const equips = rooms[currentRoomIndex].equipments || [];
 
     equips.forEach((eq, i) => {
         const total = (eq.qty || 1) * (eq.price || 0);
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${eq.name}</td>
+            <td>${eq.name || ''}</td>
             <td>${eq.replaceName || '-'}</td>
             <td>${eq.replaceDate || '-'}</td>
-            <td>${eq.qty}</td>
+            <td>${eq.qty || 1}</td>
             <td>${formatVND(eq.price)}</td>
             <td>${formatVND(total)}</td>
             <td>
@@ -365,11 +419,11 @@ function handleSaveEquip(e) {
 
 function editEquip(i) {
     const eq = rooms[currentRoomIndex].equipments[i];
-    document.getElementById('equipName').value = eq.name;
+    document.getElementById('equipName').value = eq.name || '';
     document.getElementById('replaceName').value = eq.replaceName || '';
     document.getElementById('replaceDate').value = eq.replaceDate || '';
-    document.getElementById('equipQty').value = eq.qty;
-    document.getElementById('equipUnitPrice').value = eq.price;
+    document.getElementById('equipQty').value = eq.qty || 1;
+    document.getElementById('equipUnitPrice').value = eq.price || 0;
     document.getElementById('editingEquipIndex').value = i;
     document.getElementById('btnSaveEquip').innerText = "Cập nhật";
     document.getElementById('btnCancelEquip').classList.remove('hidden');
@@ -390,47 +444,41 @@ function deleteEquip(i) {
     }
 }
 
-// HÀM ÁP DỤNG THIẾT BỊ SANG PHÒNG KHÁC (TỰ ĐỘNG NHẬN DẠNG PHÒNG ĐANG MỞ)
+// HÀM ÁP DỤNG THIẾT BỊ SANG PHÒNG KHÁC (TỰ ĐỘNG BỎ QUA undefined)
 function copyEquipmentToOtherRooms() {
-    // 1. Tự động lấy tên phòng từ tiêu đề hiển thị (Ví dụ: "Chi tiết PHÒNG 03")
     const titleText = document.getElementById('modalRoomTitle')?.innerText || '';
-    
-    // Tìm phòng trong danh sách khớp với tiêu đề đang mở
     let currentRoom = null;
     let curIdx = -1;
 
-    if (typeof currentRoomIndex !== 'undefined' && currentRoomIndex !== null && currentRoomIndex >= 0 && rooms[currentRoomIndex]) {
+    if (currentRoomIndex !== null && currentRoomIndex >= 0 && rooms[currentRoomIndex]) {
         currentRoom = rooms[currentRoomIndex];
         curIdx = currentRoomIndex;
     } else {
-        // Tự động tìm phòng theo tên trên tiêu đề nếu biến currentRoomIndex bị trống
         curIdx = rooms.findIndex(r => titleText.includes(r.name));
         if (curIdx >= 0) {
             currentRoom = rooms[curIdx];
-            currentRoomIndex = curIdx; // Cập nhật lại vị trí phòng
+            currentRoomIndex = curIdx;
         }
     }
 
     if (!currentRoom) {
-        alert("Không xác định được phòng hiện tại. Vui lòng đóng bảng này và bấm mở lại phòng!");
+        alert("Không xác định được phòng hiện tại. Vui lòng đóng và mở lại phòng này!");
         return;
     }
 
-    // 2. Kiểm tra xem phòng hiện tại đã có thiết bị nào chưa
     if (!currentRoom.equipments || currentRoom.equipments.length === 0) {
-        alert(`[${currentRoom.name}] hiện chưa có thiết bị nào trong danh sách bên dưới để sao chép! Hãy thêm ít nhất 1 thiết bị trước.`);
+        alert(`[${currentRoom.name}] chưa có thiết bị nào để sao chép!`);
         return;
     }
 
-    // 3. Hỏi danh sách phòng cần áp dụng
-    let targetInput = prompt(`Đang sao chép thiết bị từ [${currentRoom.name}].\n\nNhập tên các phòng nhận (phân cách bằng dấu phẩy).\nHoặc gõ 'ALL' để áp dụng cho TẤT CẢ các phòng khác:\n\nVí dụ: Phòng 01, Phòng 02`);
+    let targetInput = prompt(`Đang sao chép thiết bị từ [${currentRoom.name}].\n\nNhập tên phòng nhận (Ví dụ: Phòng 01, Phòng 02).\nHoặc gõ 'ALL' để áp dụng cho TẤT CẢ phòng khác:`);
     if (!targetInput) return;
 
     targetInput = targetInput.trim();
     let updatedCount = 0;
 
     if (targetInput.toUpperCase() === 'ALL') {
-        if (confirm(`Xác nhận chép toàn bộ ${currentRoom.equipments.length} thiết bị từ [${currentRoom.name}] sang TẤT CẢ các phòng còn lại?`)) {
+        if (confirm(`Xác nhận sao chép toàn bộ thiết bị từ [${currentRoom.name}] sang TẤT CẢ các phòng khác?`)) {
             rooms.forEach((room, idx) => {
                 if (idx !== curIdx) {
                     room.equipments = JSON.parse(JSON.stringify(currentRoom.equipments));
@@ -450,23 +498,26 @@ function copyEquipmentToOtherRooms() {
 
     if (updatedCount > 0) {
         saveRoomsToStorage();
-        alert(`Đã sao chép thành công danh sách thiết bị sang ${updatedCount} phòng!`);
+        alert(`Đã sao chép thành công sang ${updatedCount} phòng!`);
     } else {
-        alert("Không tìm thấy tên phòng khớp với danh sách bạn nhập (Lưu ý gõ đúng tên ví dụ: Phòng 01, Phòng 02)!");
+        alert("Không tìm thấy tên phòng khớp!");
     }
 }
+
 // ==========================================
 // TAB 4: QUẢN LÝ HỢP ĐỒNG (CONTRACT)
 // ==========================================
 function loadContractForm() {
+    if (currentRoomIndex === null || !rooms[currentRoomIndex]) return;
     const c = rooms[currentRoomIndex].contract || {};
-    document.getElementById('depositAmount').value = c.depositAmount || rooms[currentRoomIndex].price;
+    document.getElementById('depositAmount').value = c.depositAmount || rooms[currentRoomIndex].price || 0;
     document.getElementById('startDate').value = c.startDate || '';
     document.getElementById('contractMonths').value = c.contractMonths || 12;
     document.getElementById('contractNote').value = c.contractNote || '';
 }
 
 function saveContractData() {
+    if (currentRoomIndex === null || !rooms[currentRoomIndex]) return;
     rooms[currentRoomIndex].contract = {
         depositAmount: Number(document.getElementById('depositAmount').value) || 0,
         startDate: document.getElementById('startDate').value,
@@ -478,7 +529,7 @@ function saveContractData() {
 }
 
 // ==========================================
-// THAO TÁC HỆ THỐNG: CHỐT KỲ, XUẤT EXCEL, JSON
+// THAO TÁC HỆ THỐNG: SAO LƯU, PHỤC HỒI chuẩn xác
 // ==========================================
 
 // Chốt kỳ điện nước (Chuyển Số Mới -> Số Cũ)
@@ -496,6 +547,7 @@ function advanceAllElectricityMeters() {
 
 // Sao lưu file JSON
 function exportBackupJSON() {
+    sanitizeAndRepairData();
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rooms, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
@@ -505,7 +557,7 @@ function exportBackupJSON() {
     downloadAnchor.remove();
 }
 
-// Phục hồi dữ liệu từ file JSON
+// Phục hồi dữ liệu từ file JSON (AN TOÀN NGUYÊN VẸN)
 function importBackupJSON(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -516,13 +568,14 @@ function importBackupJSON(event) {
             const importedData = JSON.parse(e.target.result);
             if (Array.isArray(importedData)) {
                 rooms = importedData;
+                sanitizeAndRepairData();
                 saveRoomsToStorage();
-                alert("Đã phục hồi dữ liệu thành công!");
+                alert("Đã phục hồi dữ liệu thành công! Tất cả phòng đã được khôi phục chuẩn xác.");
             } else {
-                alert("File sao lưu không đúng định dạng!");
+                alert("File sao lưu không đúng cấu trúc danh sách!");
             }
         } catch (err) {
-            alert("Lỗi khi đọc file sao lưu!");
+            alert("Lỗi khi đọc file JSON sao lưu!");
         }
     };
     reader.readAsText(file);
@@ -541,10 +594,10 @@ function exportAllTenantsToExcel() {
             r.tenants.forEach(t => {
                 excelRows.push({
                     "Phòng": r.name,
-                    "Họ và Tên": t.name,
-                    "Năm Sinh": t.birth,
-                    "Số CCCD": t.cccd,
-                    "Định Danh": t.role
+                    "Họ và Tên": t.name || '',
+                    "Năm Sinh": t.birth || '',
+                    "Số CCCD": t.cccd || '',
+                    "Định Danh": t.role || ''
                 });
             });
         }
@@ -564,6 +617,7 @@ function exportAllTenantsToExcel() {
 // Báo cáo doanh thu & Xuất hóa đơn Excel
 function openGlobalReportModal() {
     const tbody = document.getElementById('reportTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     let globalTotal = 0;
 
@@ -595,7 +649,8 @@ function openGlobalReportModal() {
         tbody.appendChild(tr);
     });
 
-    document.getElementById('globalTotalDisplay').innerText = formatVND(globalTotal);
+    const display = document.getElementById('globalTotalDisplay');
+    if (display) display.innerText = formatVND(globalTotal);
     document.getElementById('reportModal').classList.remove('hidden');
 }
 
