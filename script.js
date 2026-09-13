@@ -1,10 +1,10 @@
 // ==========================================
-// KHO KHỔI TẠO DỮ LIỆU CƠ SỞ (ĐỒNG BỘ NGUYÊN NGHĨA)
+// KHO KHỔI TẠO DỮ LIỆU CƠ SỞ (ĐỒNG BỘ CHUẨN XÁC)
 // ==========================================
 const STORAGE_KEY = 'phongtro_rooms';
 
-// Lấy dữ liệu từ cả 2 khóa để tránh mất dữ liệu cũ
-let rawData = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('rooms');
+// Lấy dữ liệu từ cả 2 khóa để tránh mất dữ liệu cũ trên thiết bị
+let rawData = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('rooms') || localStorage.getItem('phongtro_data');
 let rooms = [];
 
 try {
@@ -13,7 +13,7 @@ try {
     rooms = [];
 }
 
-// Nếu chưa có dữ liệu nào, khởi tạo danh sách mẫu
+// Nếu chưa có dữ liệu nào, khởi tạo danh sách phòng mặc định ban đầu
 if (!Array.isArray(rooms) || rooms.length === 0) {
     rooms = [
         { name: "Phòng 01", price: 2000000, tenants: [], billing: { priceElec: 3000, oldElec: 0, newElec: 0, roomRent: 2000000, waterFee: 50000, garbageFee: 20000, surchargeFee: 0 }, equipments: [], contract: { depositAmount: 2000000, startDate: "", contractMonths: 12, contractNote: "" } },
@@ -23,37 +23,42 @@ if (!Array.isArray(rooms) || rooms.length === 0) {
 
 let currentRoomIndex = null;
 
-// Hàm tự động kiểm tra & vá lỗi dữ liệu bị undefined/thiếu thuộc tính
+// Hàm tự động kiểm tra & sửa lỗi dữ liệu bị undefined / thiếu tên & giá phòng
 function sanitizeAndRepairData() {
     if (!Array.isArray(rooms)) return;
 
     rooms.forEach((room, index) => {
-        // Vá lỗi tên phòng undefined
-        if (!room.name || room.name === 'undefined') {
+        // Tự động khôi phục tên phòng nếu bị undefined hoặc rỗng
+        if (!room.name || room.name === 'undefined' || room.name.trim() === '') {
             room.name = `Phòng ${String(index + 1).padStart(2, '0')}`;
         }
-        // Vá lỗi giá phòng 0đ hoặc undefined
-        if (!room.price || isNaN(room.price)) {
+        
+        // Tự động khôi phục giá phòng nếu bị 0đ hoặc undefined
+        if (!room.price || isNaN(room.price) || Number(room.price) === 0) {
             room.price = room.billing?.roomRent || 1500000;
         }
-        // Đảm bảo có đầy đủ các mảng phụ
+
+        // Đảm bảo có đầy đủ cấu trúc mảng & đối tượng phụ
         if (!Array.isArray(room.tenants)) room.tenants = [];
         if (!Array.isArray(room.equipments)) room.equipments = [];
         if (!room.billing) {
             room.billing = { priceElec: 3000, oldElec: 0, newElec: 0, roomRent: room.price, waterFee: 50000, garbageFee: 20000, surchargeFee: 0 };
+        } else if (!room.billing.roomRent || Number(room.billing.roomRent) === 0) {
+            room.billing.roomRent = room.price;
         }
+
         if (!room.contract) {
             room.contract = { depositAmount: room.price, startDate: "", contractMonths: 12, contractNote: "" };
         }
     });
 }
 
-// Hàm lưu dữ liệu vào LocalStorage (Lưu cả 2 khóa để đảm bảo tuyệt đối)
+// Hàm lưu dữ liệu an toàn vào LocalStorage
 function saveRoomsToStorage() {
     sanitizeAndRepairData();
     const dataStr = JSON.stringify(rooms);
     localStorage.setItem(STORAGE_KEY, dataStr);
-    localStorage.setItem('rooms', dataStr); // Lưu phòng ngừa cho mã cũ
+    localStorage.setItem('rooms', dataStr); // Lưu song song để hỗ trợ code cũ
     renderRooms();
 }
 
@@ -83,11 +88,11 @@ function renderRooms() {
         const tenantCount = room.tenants ? room.tenants.length : 0;
         const isOccupied = tenantCount > 0;
 
-        // Lọc trạng thái
+        // Lọc trạng thái phòng
         if (statusFilter === 'OCCUPIED' && !isOccupied) return;
         if (statusFilter === 'EMPTY' && isOccupied) return;
 
-        // Lọc từ khóa tìm kiếm (Tên phòng, Tên người ở, CCCD)
+        // Lọc theo từ khóa (Tên phòng, tên người ở, CCCD)
         if (searchText) {
             const matchRoom = room.name.toLowerCase().includes(searchText);
             const matchTenant = room.tenants && room.tenants.some(t => (t.name && t.name.toLowerCase().includes(searchText)) || (t.cccd && t.cccd.includes(searchText)));
@@ -123,12 +128,17 @@ function renderRooms() {
 
 function filterRooms() { renderRooms(); }
 
+// Thêm phòng mới
 function handleAddRoom(e) {
     e.preventDefault();
-    const name = document.getElementById('newRoomName').value.trim();
-    const price = Number(document.getElementById('newRoomPrice').value) || 0;
+    const nameInput = document.getElementById('newRoomName');
+    const priceInput = document.getElementById('newRoomPrice');
+
+    const name = nameInput.value.trim();
+    const price = Number(priceInput.value) || 0;
 
     if (!name) return;
+
     rooms.push({
         name: name,
         price: price,
@@ -158,7 +168,7 @@ function deleteRoom(index) {
 }
 
 // ==========================================
-// 2. MODAL CHI TIẾT PHÒNG & CHUYỂN TAB
+// 2. MODAL CHI TIẾT PHÒNG & TAB CHỨC NĂNG
 // ==========================================
 function openRoomModal(index) {
     currentRoomIndex = index;
@@ -167,13 +177,11 @@ function openRoomModal(index) {
     document.getElementById('modalRoomTitle').innerText = `Chi tiết - ${room.name}`;
     document.getElementById('roomModal').classList.remove('hidden');
 
-    // Nạp dữ liệu các tab
     renderTenants();
     loadBillingForm();
     renderEquipments();
     loadContractForm();
 
-    // Mặc định mở Tab 1
     openTab('tabTenants', document.getElementById('tabBtn1'));
 }
 
@@ -325,6 +333,10 @@ function saveBillingData() {
         priceElec: calc.priceElec, oldElec: calc.oldElec, newElec: calc.newElec,
         roomRent: calc.roomRent, waterFee: calc.waterFee, garbageFee: calc.garbageFee, surchargeFee: calc.surchargeFee
     };
+    // Đồng bộ lại giá phòng nếu được cập nhật ở tab tiền phòng
+    if (calc.roomRent > 0) {
+        rooms[currentRoomIndex].price = calc.roomRent;
+    }
     saveRoomsToStorage();
     alert("Đã lưu thông tin tiền phòng thành công!");
 }
@@ -444,7 +456,7 @@ function deleteEquip(i) {
     }
 }
 
-// HÀM ÁP DỤNG THIẾT BỊ SANG PHÒNG KHÁC (TỰ ĐỘNG BỎ QUA undefined)
+// Áp dụng thiết bị sang phòng khác
 function copyEquipmentToOtherRooms() {
     const titleText = document.getElementById('modalRoomTitle')?.innerText || '';
     let currentRoom = null;
@@ -529,10 +541,10 @@ function saveContractData() {
 }
 
 // ==========================================
-// THAO TÁC HỆ THỐNG: SAO LƯU, PHỤC HỒI chuẩn xác
+// THAO TÁC HỆ THỐNG: CHỐT KỲ, SAO LƯU, PHỤC HỒI
 // ==========================================
 
-// Chốt kỳ điện nước (Chuyển Số Mới -> Số Cũ)
+// Chốt kỳ điện nước (Số Mới -> Số Cũ)
 function advanceAllElectricityMeters() {
     if (confirm("Xác nhận chốt kỳ mới? Toàn bộ Số điện mới sẽ được chuyển thành Số điện cũ cho tất cả các phòng.")) {
         rooms.forEach(r => {
@@ -557,7 +569,7 @@ function exportBackupJSON() {
     downloadAnchor.remove();
 }
 
-// Phục hồi dữ liệu từ file JSON (AN TOÀN NGUYÊN VẸN)
+// Phục hồi dữ liệu từ file JSON
 function importBackupJSON(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -570,9 +582,9 @@ function importBackupJSON(event) {
                 rooms = importedData;
                 sanitizeAndRepairData();
                 saveRoomsToStorage();
-                alert("Đã phục hồi dữ liệu thành công! Tất cả phòng đã được khôi phục chuẩn xác.");
+                alert("Đã phục hồi dữ liệu thành công! Tên phòng và thông tin người ở đã được khôi phục chuẩn xác.");
             } else {
-                alert("File sao lưu không đúng cấu trúc danh sách!");
+                alert("File sao lưu không đúng định dạng!");
             }
         } catch (err) {
             alert("Lỗi khi đọc file JSON sao lưu!");
