@@ -88,3 +88,74 @@ h1, h2, h3 { color: #1a73e8; margin-top: 0; }
 .receipt-box h3 { text-align: center; color: #d84315; margin-bottom: 5px; }
 .receipt-line { display: flex; justify-content: space-between; border-bottom: 1px dotted #ccc; padding: 4px 0; }
 .receipt-total { font-weight: bold; font-size: 16px; color: #2e7d32; border-top: 2px solid #333; margin-top: 10px; padding-top: 5px; }
+/* ==========================================
+   CẤU HÌNH GIAO DIỆN CHUẨN CHO ĐIỆN THOẠI (RESPONSIVE)
+   ========================================== */
+
+@media (max-width: 768px) {
+    /* 1. Thu gọn lề trang web cho vừa màn hình nhỏ */
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 20px;
+        text-align: center;
+    }
+
+    /* 2. Ép danh sách thẻ phòng hiển thị 1 hoặc 2 cột trên điện thoại */
+    .room-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    /* 3. Chuyển các thanh nút bấm nằm dọc để dễ bấm ngón tay */
+    .report-actions, .filter-bar, .form-inline {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .report-actions button, .filter-bar input, .filter-bar select {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    /* 4. Tối ưu khung Modal hiển thị tràn màn hình điện thoại */
+    .modal-content {
+        width: 95% !important;
+        max-width: 100% !important;
+        padding: 15px !important;
+        margin: 10px auto !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+    }
+
+    /* 5. Cho phép cuộn ngang đối với các bảng dữ liệu dài (Bảng thiết bị, Bảng báo cáo) */
+    .data-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    /* 6. Chuyển các ô nhập liệu trong form thành 1 cột */
+    .grid-form, .form-row {
+        grid-template-columns: 1fr !important;
+        flex-direction: column !important;
+    }
+
+    /* 7. Thu nhỏ thanh Tab chuyển đổi tính năng */
+    .tab-bar {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .tab-btn {
+        flex: 1 1 45%;
+        padding: 8px 5px;
+        font-size: 13px;
+    }
+}
