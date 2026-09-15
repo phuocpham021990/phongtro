@@ -1,5 +1,5 @@
 // ==========================================
-// KHO KHỔI TẠO DỮ LIỆU CƠ SỞ (ĐỒNG BỘ CHUẨN XÁC)
+// KHO KHỔI TẠO DỮ LIỆU CƠ SỞ
 // ==========================================
 const STORAGE_KEY = 'phongtro_rooms';
 
@@ -12,7 +12,6 @@ try {
     rooms = [];
 }
 
-// Danh sách phòng mặc định ban đầu nếu bộ nhớ trống
 if (!Array.isArray(rooms) || rooms.length === 0) {
     rooms = [
         { name: "Phòng 01", price: 2000000, tenants: [], billing: { priceElec: 3000, oldElec: 0, newElec: 0, roomRent: 2000000, waterFee: 50000, garbageFee: 20000, surchargeFee: 0 }, equipments: [], contract: { depositAmount: 2000000, startDate: "", contractMonths: 12, contractNote: "" } },
@@ -22,7 +21,6 @@ if (!Array.isArray(rooms) || rooms.length === 0) {
 
 let currentRoomIndex = null;
 
-// Hàm kiểm tra & sửa lỗi dữ liệu bị undefined / rỗng
 function sanitizeAndRepairData() {
     if (!Array.isArray(rooms)) return;
 
@@ -46,7 +44,6 @@ function sanitizeAndRepairData() {
     });
 }
 
-// Lưu dữ liệu vào LocalStorage
 function saveRoomsToStorage() {
     sanitizeAndRepairData();
     const dataStr = JSON.stringify(rooms);
@@ -60,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
     saveRoomsToStorage();
 });
 
-// Định dạng tiền tệ VNĐ
 function formatVND(amount) {
     return new Intl.NumberFormat('vi-VN').format(amount || 0) + " đ";
 }
@@ -118,7 +114,6 @@ function renderRooms() {
 
 function filterRooms() { renderRooms(); }
 
-// Thêm phòng mới
 function handleAddRoom(e) {
     e.preventDefault();
     const nameInput = document.getElementById('newRoomName');
@@ -142,32 +137,26 @@ function handleAddRoom(e) {
     document.getElementById('addRoomForm').reset();
 }
 
-// SỬA ĐỒNG THỜI TÊN PHÒNG VÀ GIÁ PHÒNG MẶC ĐỊNH
 function editRoomInfo(index) {
     const room = rooms[index];
-    
-    // Bước 1: Nhập tên phòng mới
     const newName = prompt("Nhập TÊN PHÒNG mới:", room.name);
-    if (newName === null) return; // Người dùng nhấn Hủy
+    if (newName === null) return;
 
-    // Bước 2: Nhập giá phòng mới
     const newPriceInput = prompt("Nhập GIÁ PHÒNG MẶC ĐỊNH mới (VNĐ):", room.price);
-    if (newPriceInput === null) return; // Người dùng nhấn Hủy
+    if (newPriceInput === null) return;
 
     const finalName = newName.trim() || room.name;
     const finalPrice = Number(newPriceInput) || room.price;
 
-    // Cập nhật tên phòng và giá phòng gốc
     rooms[index].name = finalName;
     rooms[index].price = finalPrice;
 
-    // Cập nhật cả tiền phòng trong phần hóa đơn nếu chưa được chốt riêng
     if (rooms[index].billing) {
         rooms[index].billing.roomRent = finalPrice;
     }
 
     saveRoomsToStorage();
-    alert(`Đã cập nhật thông tin [${finalName}]!\nGiá phòng mới: ${formatVND(finalPrice)}`);
+    alert(`Đã cập nhật [${finalName}] - Giá mới: ${formatVND(finalPrice)}`);
 }
 
 function deleteRoom(index) {
@@ -208,9 +197,7 @@ function openTab(tabId, btnElement) {
     if (btnElement) btnElement.classList.add('active');
 }
 
-// ==========================================
-// TAB 1: QUẢN LÝ CON NGƯỜI (TENANTS)
-// ==========================================
+// TAB 1: QUẢN LÝ CON NGƯỜI
 function renderTenants() {
     const list = document.getElementById('tenantList');
     if (!list) return;
@@ -300,9 +287,7 @@ function deleteTenant(i) {
     }
 }
 
-// ==========================================
-// TAB 2: QUẢN LÝ TIỀN PHÒNG (BILLING)
-// ==========================================
+// TAB 2: QUẢN LÝ TIỀN PHÒNG
 function loadBillingForm() {
     if (currentRoomIndex === null || !rooms[currentRoomIndex]) return;
     const b = rooms[currentRoomIndex].billing || {};
@@ -347,13 +332,11 @@ function saveBillingData() {
         rooms[currentRoomIndex].price = calc.roomRent;
     }
     saveRoomsToStorage();
-    alert("Đã lưu thông tin tiền phòng thành công!");
 }
 
 // ==========================================
-// TÍCH HỢP TẠO MÃ VIETQR CHUYỂN KHOẢN TỰ ĐỘNG
+// TÍCH HỢP MÃ VIETQR TỰ ĐỘNG
 // ==========================================
-
 function getBankConfig() {
     return {
         bankCode: localStorage.getItem('bank_code') || 'MB',
@@ -369,48 +352,70 @@ function saveBankConfig(bankCode, accNo, accName) {
 }
 
 function updateVietQR() {
-    const bankCode = document.getElementById('bankCodeSelect')?.value || 'MB';
-    const accNo = document.getElementById('bankAccNoInput')?.value.trim() || '';
-    const accName = document.getElementById('bankAccNameInput')?.value.trim() || 'PHAM HONG PHUOC';
+    try {
+        const bankCode = document.getElementById('bankCodeSelect')?.value || 'MB';
+        const accNo = document.getElementById('bankAccNoInput')?.value.trim() || '';
+        const accName = document.getElementById('bankAccNameInput')?.value.trim() || 'PHAM HONG PHUOC';
 
-    saveBankConfig(bankCode, accNo, accName);
+        saveBankConfig(bankCode, accNo, accName);
 
-    const qrImg = document.getElementById('vietQrImg');
-    const qrNotice = document.getElementById('qrNotice');
-    const qrSubNotice = document.getElementById('qrSubNotice');
+        const qrImg = document.getElementById('vietQrImg');
+        const qrNotice = document.getElementById('qrNotice');
+        const qrSubNotice = document.getElementById('qrSubNotice');
 
-    // Nếu chưa nhập số tài khoản -> Hiện thông báo nhắc nhở
-    if (!accNo) {
-        if (qrImg) qrImg.style.display = 'none';
-        if (qrNotice) {
-            qrNotice.style.display = 'block';
-            qrNotice.innerText = '⚠️ Bạn hãy nhập Số tài khoản ở ô trên để hiển thị mã QR';
+        if (!accNo) {
+            if (qrImg) qrImg.style.display = 'none';
+            if (qrNotice) {
+                qrNotice.style.display = 'block';
+                qrNotice.innerText = '⚠️ Hãy nhập Số tài khoản ở ô bên trên để hiện mã QR';
+            }
+            if (qrSubNotice) qrSubNotice.style.display = 'none';
+            return;
         }
-        if (qrSubNotice) qrSubNotice.style.display = 'none';
-        return;
+
+        let room = (currentRoomIndex !== null && rooms && rooms[currentRoomIndex]) ? rooms[currentRoomIndex] : null;
+        if (!room) {
+            const titleText = document.getElementById('modalRoomTitle')?.innerText || '';
+            room = rooms.find(r => titleText.includes(r.name));
+        }
+
+        let roomName = room ? room.name : 'Phong';
+        const calc = calculateTotalBill();
+
+        const roomNameUnsign = roomName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+        const addInfo = `${roomNameUnsign} thanh toan tien phong`.trim();
+
+        const qrUrl = `https://img.vietqr.io/image/${bankCode}-${accNo}-compact2.png?amount=${calc.grandTotal}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accName)}`;
+
+        if (qrImg) {
+            qrImg.src = qrUrl;
+            qrImg.style.display = 'inline-block';
+            qrImg.onerror = function() {
+                if (qrNotice) {
+                    qrNotice.style.display = 'block';
+                    qrNotice.innerText = '⚠️ Không thể tải mã QR. Vui lòng kiểm tra Số tài khoản!';
+                }
+                qrImg.style.display = 'none';
+            };
+            qrImg.onload = function() {
+                if (qrNotice) qrNotice.style.display = 'none';
+                if (qrSubNotice) qrSubNotice.style.display = 'block';
+            };
+        }
+    } catch (err) {
+        console.error("VietQR Error:", err);
     }
-
-    // Khi đã có số tài khoản -> Tạo ảnh QR lập tức
-    let room = (currentRoomIndex !== null && rooms[currentRoomIndex]) ? rooms[currentRoomIndex] : null;
-    let roomName = room ? room.name : 'Phong';
-    const calc = calculateTotalBill();
-
-    const roomNameUnsign = roomName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
-    const addInfo = `${roomNameUnsign} thanh toan tien phong`.trim();
-
-    const qrUrl = `https://img.vietqr.io/image/${bankCode}-${accNo}-compact2.png?amount=${calc.grandTotal}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accName)}`;
-
-    if (qrImg) {
-        qrImg.src = qrUrl;
-        qrImg.style.display = 'inline-block';
-    }
-    if (qrNotice) qrNotice.style.display = 'none';
-    if (qrSubNotice) qrSubNotice.style.display = 'block';
 }
 
 function openReceiptModal() {
     saveBillingData();
-    const room = rooms[currentRoomIndex];
+
+    let room = (currentRoomIndex !== null && rooms && rooms[currentRoomIndex]) ? rooms[currentRoomIndex] : null;
+    if (!room) {
+        const titleText = document.getElementById('modalRoomTitle')?.innerText || '';
+        room = rooms.find(r => titleText.includes(r.name));
+    }
+
     const calc = calculateTotalBill();
     const headTenant = (room?.tenants && room.tenants[0]) ? room.tenants[0].name : "Khách thuê";
 
@@ -435,25 +440,28 @@ TỔNG CỘNG THANH TOÁN: ${formatVND(calc.grandTotal)}
 ----------------------------------
 Quý khách có thể quét mã VietQR bên trên để chuyển khoản nhanh. Xin cảm ơn!`;
 
-    document.getElementById('receiptPreview').innerText = receiptText;
+    const previewEl = document.getElementById('receiptPreview');
+    if (previewEl) previewEl.innerText = receiptText;
 
     updateVietQR();
 
-    document.getElementById('receiptModal').classList.remove('hidden');
+    const receiptModalEl = document.getElementById('receiptModal');
+    if (receiptModalEl) receiptModalEl.classList.remove('hidden');
 }
 
-function closeReceiptModal() { document.getElementById('receiptModal').classList.add('hidden'); }
+function closeReceiptModal() {
+    const modal = document.getElementById('receiptModal');
+    if (modal) modal.classList.add('hidden');
+}
 
 function copyZaloText() {
     const text = document.getElementById('receiptPreview').innerText;
     navigator.clipboard.writeText(text).then(() => {
-        alert("Đã sao chép phiếu thu! Hãy dán (Paste) vào Zalo để gửi cho khách thuê.");
+        alert("Đã sao chép phiếu thu! Hãy dán (Paste) vào Zalo để gửi cho khách.");
     });
 }
 
-// ==========================================
 // TAB 3: QUẢN LÝ TRANG THIẾT BỊ
-// ==========================================
 function renderEquipments() {
     const tbody = document.getElementById('equipTableBody');
     if (!tbody) return;
@@ -531,7 +539,6 @@ function deleteEquip(i) {
     }
 }
 
-// Áp dụng thiết bị sang phòng khác
 function copyEquipmentToOtherRooms() {
     const titleText = document.getElementById('modalRoomTitle')?.innerText || '';
     let currentRoom = null;
@@ -591,9 +598,7 @@ function copyEquipmentToOtherRooms() {
     }
 }
 
-// ==========================================
-// TAB 4: QUẢN LÝ HỢP ĐỒNG (CONTRACT)
-// ==========================================
+// TAB 4: QUẢN LÝ HỢP ĐỒNG
 function loadContractForm() {
     if (currentRoomIndex === null || !rooms[currentRoomIndex]) return;
     const c = rooms[currentRoomIndex].contract || {};
@@ -615,10 +620,7 @@ function saveContractData() {
     alert("Đã lưu thông tin hợp đồng thành công!");
 }
 
-// ==========================================
-// THAO TÁC HỆ THỐNG: CHỐT KỲ, SAO LƯU, PHỤC HỒI
-// ==========================================
-
+// THAO TÁC HỆ THỐNG
 function advanceAllElectricityMeters() {
     if (confirm("Xác nhận chốt kỳ mới? Toàn bộ Số điện mới sẽ được chuyển thành Số điện cũ cho tất cả các phòng.")) {
         rooms.forEach(r => {
@@ -736,7 +738,10 @@ function openGlobalReportModal() {
     document.getElementById('reportModal').classList.remove('hidden');
 }
 
-function closeReportModal() { document.getElementById('reportModal').classList.add('hidden'); }
+function closeReportModal() {
+    const modal = document.getElementById('reportModal');
+    if (modal) modal.classList.add('hidden');
+}
 
 function exportInvoicesToExcel() {
     if (typeof XLSX === 'undefined') return;
