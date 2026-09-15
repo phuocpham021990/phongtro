@@ -354,7 +354,6 @@ function saveBillingData() {
 // TÍCH HỢP TẠO MÃ VIETQR CHUYỂN KHOẢN TỰ ĐỘNG
 // ==========================================
 
-// Đọc & Lưu thông tin Ngân hàng vào LocalStorage
 function getBankConfig() {
     return {
         bankCode: localStorage.getItem('bank_code') || 'MB',
@@ -369,46 +368,52 @@ function saveBankConfig(bankCode, accNo, accName) {
     localStorage.setItem('bank_acc_name', accName);
 }
 
-// Hàm cập nhật ảnh VietQR động khi thay đổi số tiền hoặc ngân hàng
 function updateVietQR() {
     const bankCode = document.getElementById('bankCodeSelect')?.value || 'MB';
     const accNo = document.getElementById('bankAccNoInput')?.value.trim() || '';
     const accName = document.getElementById('bankAccNameInput')?.value.trim() || 'PHAM HONG PHUOC';
 
-    // Lưu lại cài đặt ngân hàng cho các lần sau
     saveBankConfig(bankCode, accNo, accName);
 
     const qrImg = document.getElementById('vietQrImg');
-    const qrBox = document.getElementById('qrCodeBox');
+    const qrNotice = document.getElementById('qrNotice');
+    const qrSubNotice = document.getElementById('qrSubNotice');
 
+    // Nếu chưa nhập số tài khoản -> Hiện thông báo nhắc nhở
     if (!accNo) {
-        if (qrBox) qrBox.style.display = 'none';
+        if (qrImg) qrImg.style.display = 'none';
+        if (qrNotice) {
+            qrNotice.style.display = 'block';
+            qrNotice.innerText = '⚠️ Bạn hãy nhập Số tài khoản ở ô trên để hiển thị mã QR';
+        }
+        if (qrSubNotice) qrSubNotice.style.display = 'none';
         return;
     }
 
-    if (qrBox) qrBox.style.display = 'block';
-
-    const room = rooms[currentRoomIndex];
+    // Khi đã có số tài khoản -> Tạo ảnh QR lập tức
+    let room = (currentRoomIndex !== null && rooms[currentRoomIndex]) ? rooms[currentRoomIndex] : null;
+    let roomName = room ? room.name : 'Phong';
     const calc = calculateTotalBill();
-    
-    // Tạo nội dung chuyển khoản không dấu (VD: "Phong 01 thanh toan tien phong")
-    const roomNameUnsign = (room?.name || 'Phong').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+
+    const roomNameUnsign = roomName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
     const addInfo = `${roomNameUnsign} thanh toan tien phong`.trim();
 
-    // Link tạo ảnh QR chuẩn VietQR (compact2 layout)
     const qrUrl = `https://img.vietqr.io/image/${bankCode}-${accNo}-compact2.png?amount=${calc.grandTotal}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accName)}`;
 
-    if (qrImg) qrImg.src = qrUrl;
+    if (qrImg) {
+        qrImg.src = qrUrl;
+        qrImg.style.display = 'inline-block';
+    }
+    if (qrNotice) qrNotice.style.display = 'none';
+    if (qrSubNotice) qrSubNotice.style.display = 'block';
 }
 
-// Mở Modal Phiếu thu & Tạo mã VietQR
 function openReceiptModal() {
     saveBillingData();
     const room = rooms[currentRoomIndex];
     const calc = calculateTotalBill();
-    const headTenant = (room.tenants && room.tenants[0]) ? room.tenants[0].name : "Khách thuê";
+    const headTenant = (room?.tenants && room.tenants[0]) ? room.tenants[0].name : "Khách thuê";
 
-    // Nạp thông tin ngân hàng đã lưu vào form
     const bankConfig = getBankConfig();
     if (document.getElementById('bankCodeSelect')) document.getElementById('bankCodeSelect').value = bankConfig.bankCode;
     if (document.getElementById('bankAccNoInput')) document.getElementById('bankAccNoInput').value = bankConfig.accNo;
@@ -416,7 +421,7 @@ function openReceiptModal() {
 
     const receiptText = 
 `--- PHIẾU THU TIỀN PHÒNG ---
-Phòng: ${room.name}
+Phòng: ${room?.name || ''}
 Người đại diện: ${headTenant}
 ----------------------------------
 1. Tiền phòng: ${formatVND(calc.roomRent)}
@@ -432,7 +437,6 @@ Quý khách có thể quét mã VietQR bên trên để chuyển khoản nhanh. 
 
     document.getElementById('receiptPreview').innerText = receiptText;
 
-    // Cập nhật mã VietQR
     updateVietQR();
 
     document.getElementById('receiptModal').classList.remove('hidden');
@@ -443,7 +447,7 @@ function closeReceiptModal() { document.getElementById('receiptModal').classList
 function copyZaloText() {
     const text = document.getElementById('receiptPreview').innerText;
     navigator.clipboard.writeText(text).then(() => {
-        alert("Đã sao chép phiếu thu! Hãy dán (Paste) vào Zalo để gửi cho khách thuê kèm ảnh chụp màn hình mã QR.");
+        alert("Đã sao chép phiếu thu! Hãy dán (Paste) vào Zalo để gửi cho khách thuê.");
     });
 }
 
