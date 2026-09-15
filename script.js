@@ -350,11 +350,69 @@ function saveBillingData() {
     alert("Đã lưu thông tin tiền phòng thành công!");
 }
 
+// ==========================================
+// TÍCH HỢP TẠO MÃ VIETQR CHUYỂN KHOẢN TỰ ĐỘNG
+// ==========================================
+
+// Đọc & Lưu thông tin Ngân hàng vào LocalStorage
+function getBankConfig() {
+    return {
+        bankCode: localStorage.getItem('bank_code') || 'MB',
+        accNo: localStorage.getItem('bank_acc_no') || '',
+        accName: localStorage.getItem('bank_acc_name') || 'PHAM HONG PHUOC'
+    };
+}
+
+function saveBankConfig(bankCode, accNo, accName) {
+    localStorage.setItem('bank_code', bankCode);
+    localStorage.setItem('bank_acc_no', accNo);
+    localStorage.setItem('bank_acc_name', accName);
+}
+
+// Hàm cập nhật ảnh VietQR động khi thay đổi số tiền hoặc ngân hàng
+function updateVietQR() {
+    const bankCode = document.getElementById('bankCodeSelect')?.value || 'MB';
+    const accNo = document.getElementById('bankAccNoInput')?.value.trim() || '';
+    const accName = document.getElementById('bankAccNameInput')?.value.trim() || 'PHAM HONG PHUOC';
+
+    // Lưu lại cài đặt ngân hàng cho các lần sau
+    saveBankConfig(bankCode, accNo, accName);
+
+    const qrImg = document.getElementById('vietQrImg');
+    const qrBox = document.getElementById('qrCodeBox');
+
+    if (!accNo) {
+        if (qrBox) qrBox.style.display = 'none';
+        return;
+    }
+
+    if (qrBox) qrBox.style.display = 'block';
+
+    const room = rooms[currentRoomIndex];
+    const calc = calculateTotalBill();
+    
+    // Tạo nội dung chuyển khoản không dấu (VD: "Phong 01 thanh toan tien phong")
+    const roomNameUnsign = (room?.name || 'Phong').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+    const addInfo = `${roomNameUnsign} thanh toan tien phong`.trim();
+
+    // Link tạo ảnh QR chuẩn VietQR (compact2 layout)
+    const qrUrl = `https://img.vietqr.io/image/${bankCode}-${accNo}-compact2.png?amount=${calc.grandTotal}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accName)}`;
+
+    if (qrImg) qrImg.src = qrUrl;
+}
+
+// Mở Modal Phiếu thu & Tạo mã VietQR
 function openReceiptModal() {
     saveBillingData();
     const room = rooms[currentRoomIndex];
     const calc = calculateTotalBill();
     const headTenant = (room.tenants && room.tenants[0]) ? room.tenants[0].name : "Khách thuê";
+
+    // Nạp thông tin ngân hàng đã lưu vào form
+    const bankConfig = getBankConfig();
+    if (document.getElementById('bankCodeSelect')) document.getElementById('bankCodeSelect').value = bankConfig.bankCode;
+    if (document.getElementById('bankAccNoInput')) document.getElementById('bankAccNoInput').value = bankConfig.accNo;
+    if (document.getElementById('bankAccNameInput')) document.getElementById('bankAccNameInput').value = bankConfig.accName;
 
     const receiptText = 
 `--- PHIẾU THU TIỀN PHÒNG ---
@@ -370,9 +428,13 @@ Người đại diện: ${headTenant}
 ----------------------------------
 TỔNG CỘNG THANH TOÁN: ${formatVND(calc.grandTotal)}
 ----------------------------------
-Vui lòng thanh toán đầu tháng. Xin cảm ơn!`;
+Quý khách có thể quét mã VietQR bên trên để chuyển khoản nhanh. Xin cảm ơn!`;
 
     document.getElementById('receiptPreview').innerText = receiptText;
+
+    // Cập nhật mã VietQR
+    updateVietQR();
+
     document.getElementById('receiptModal').classList.remove('hidden');
 }
 
@@ -381,7 +443,7 @@ function closeReceiptModal() { document.getElementById('receiptModal').classList
 function copyZaloText() {
     const text = document.getElementById('receiptPreview').innerText;
     navigator.clipboard.writeText(text).then(() => {
-        alert("Đã sao chép phiếu thu! Hãy dán (Paste) vào Zalo để gửi cho khách.");
+        alert("Đã sao chép phiếu thu! Hãy dán (Paste) vào Zalo để gửi cho khách thuê kèm ảnh chụp màn hình mã QR.");
     });
 }
 
