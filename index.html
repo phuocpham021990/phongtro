@@ -201,16 +201,46 @@
         </div>
     </div>
 
-    <!-- MODAL XEM PHIẾU THU & GỬI ZALO -->
+    <!-- MODAL XEM PHIẾU THU & GỬI ZALO TÍCH HỢP VIETQR -->
     <div id="receiptModal" class="modal-overlay hidden" style="z-index: 2000;">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
-                <h2>Phiếu Thu Tiền Phòng</h2>
+                <h2>Phiếu Thu & Mã VietQR</h2>
                 <button class="btn-close" onclick="closeReceiptModal()">&times;</button>
             </div>
-            <div id="receiptPreview" class="receipt-box" style="white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;"></div>
-            <div class="action-btn-group" style="margin-top: 15px;">
-                <button type="button" class="btn-zalo" onclick="copyZaloText()">📋 Copy gửi Zalo</button>
+
+            <!-- Cấu hình Ngân hàng nhận tiền -->
+            <div style="background: #eef5ff; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 12px;">
+                <strong style="color: #0068ff;">💳 Cài đặt tài khoản nhận tiền:</strong>
+                <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+                    <select id="bankCodeSelect" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc; flex: 1;" onchange="updateVietQR()">
+                        <option value="MB">MBBank (MB)</option>
+                        <option value="VCB">Vietcombank (VCB)</option>
+                        <option value="ICB">VietinBank</option>
+                        <option value="BIDV">BIDV</option>
+                        <option value="TCB">Techcombank</option>
+                        <option value="ACB">ACB</option>
+                        <option value="TPB">TPBank</option>
+                        <option value="VPB">VPBank</option>
+                        <option value="VBA">Agribank</option>
+                        <option value="STB">Sacombank</option>
+                    </select>
+                    <input type="text" id="bankAccNoInput" placeholder="Số tài khoản" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc; flex: 1;" oninput="updateVietQR()">
+                    <input type="text" id="bankAccNameInput" placeholder="Tên chủ tài khoản" value="PHAM HONG PHUOC" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc; flex: 1;" oninput="updateVietQR()">
+                </div>
+            </div>
+
+            <!-- Mã VietQR tự động -->
+            <div id="qrCodeBox" style="text-align: center; margin-bottom: 12px;">
+                <img id="vietQrImg" src="" alt="Mã VietQR Chuyển Khoản" style="max-width: 260px; width: 100%; height: auto; border-radius: 8px; border: 1px solid #388e3c; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                <p style="font-size: 11px; color: #555; margin: 4px 0 0 0;">(Quét mã để tự điền Số tiền & Nội dung)</p>
+            </div>
+
+            <!-- Nội dung văn bản gửi Zalo -->
+            <div id="receiptPreview" class="receipt-box" style="white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; max-height: 180px; overflow-y: auto;"></div>
+            
+            <div class="action-btn-group" style="margin-top: 12px; display: flex; gap: 8px;">
+                <button type="button" class="btn-zalo" onclick="copyZaloText()" style="flex: 1;">📋 Copy văn bản gửi Zalo</button>
             </div>
         </div>
     </div>
@@ -251,7 +281,7 @@
         </div>
     </div>
 
-    <!-- Gọi Script có đuôi xóa cache ?v=14 -->
-   <script src="script.js?v=14"></script>
+    <!-- Gọi Script có đuôi xóa cache ?v=15 -->
+   <script src="script.js?v=15"></script>
 </body>
 </html>
