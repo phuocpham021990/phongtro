@@ -6,6 +6,68 @@
     <title>PHÒNG TRỌ PHẠM HỒNG PHƯỚC</title>
     <!-- Thêm đuôi ?v=10 để bắt buộc trình duyệt điện thoại tải CSS mới -->
     <link rel="stylesheet" href="style.css?v=10">
+    <style>
+        /* TỐI ƯU GIAO DIỆN MODAL TRÊN ĐIỆN THOẠI */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .modal-overlay.hidden { display: none !important; }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 650px;
+            max-height: 90vh; /* Giữ khoảng trống 10% màn hình để không bị cấn */
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Thanh Header cố định luôn ở trên cùng */
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 100;
+            padding: 10px 15px;
+            border-bottom: 2px solid #eef2f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-back-mobile {
+            background: #0068ff;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Cho phép cuộn nội dung bên trong modal */
+        .tab-content {
+            overflow-y: auto;
+            max-height: calc(90vh - 120px);
+            padding: 15px;
+        }
+    </style>
     <!-- Thư viện xuất Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -44,12 +106,13 @@
         <div id="roomGrid" class="room-grid"></div>
     </div>
 
-    <!-- MODAL CHI TIẾT PHÒNG -->
+   <!-- MODAL CHI TIẾT PHÒNG -->
     <div id="roomModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalRoomTitle">Chi tiết phòng</h2>
-                <button class="btn-close" onclick="closeModal()">&times;</button>
+                <button type="button" class="btn-back-mobile" onclick="closeModal()">⬅️ Quay lại</button>
+                <h2 id="modalRoomTitle" style="margin: 0; font-size: 16px; flex: 1; text-align: center;">Chi tiết phòng</h2>
+                <button class="btn-close" onclick="closeModal()" style="font-size: 24px; border: none; background: transparent; cursor: pointer; padding: 0 5px;">&times;</button>
             </div>
 
             <!-- Thanh Chuyển Tab -->
@@ -59,7 +122,7 @@
                 <button class="tab-btn" id="tabBtn3" onclick="openTab('tabEquipment', this)">3. Thiết bị</button>
                 <button class="tab-btn" id="tabBtn4" onclick="openTab('tabContract', this)">4. Hợp đồng</button>
             </div>
-
+            ...
             <!-- TAB 1: QUẢN LÝ CON NGƯỜI -->
             <div id="tabTenants" class="tab-content active">
                 <h3 id="tenantFormTitle">Thêm người ở mới</h3>
@@ -282,6 +345,6 @@
     </div>
 
     <!-- Gọi Script có đuôi xóa cache ?v=20 -->
-   <script src="script.js?v=20"></script>
+   <script src="script.js?v=21"></script>
 </body>
 </html>
