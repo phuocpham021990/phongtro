@@ -13,7 +13,15 @@ const DEFAULT_ROOMS = [
 ];
 
 let roomsData = [];
-let activeRoomId = null;
+try {
+    const savedRooms = localStorage.getItem('phuoc_rooms_data');
+    if (savedRooms) {
+        roomsData = JSON.parse(savedRooms);
+    }
+} catch (e) {
+    console.error("Lỗi đọc dữ liệu ban đầu:", e);
+    roomsData = [];
+}
 
 // ==========================================
 // 1. TÍNH NĂNG TỰ ĐỘNG LƯU LOCALSTORAGE
@@ -758,6 +766,10 @@ function importDataFromTextPaste() {
     if (!jsonInput || !jsonInput.trim()) return;
     processImportedJSON(jsonInput.trim());
 }
+window.addEventListener('DOMContentLoaded', () => {
+    if (typeof renderRoomList === 'function') renderRoomList();
+    if (typeof renderDashboard === 'function') renderDashboard();
+});
 // Khởi chạy hệ thống
 loadFromLocalStorage();
 renderRoomGrid();
