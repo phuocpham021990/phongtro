@@ -37,11 +37,23 @@
             <button onclick="openGlobalReportModal()" style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📊 Báo Cáo Doanh Thu</button>
             <button onclick="exportAllTenantsToExcel()" style="background: #17a2b8; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📑 Xuất DS Tạm Trú (Excel)</button>
             <button onclick="advanceAllElectricityMeters()" style="background: #ff9800; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">🔄 Chốt Kỳ (Số Mới ➔ Số Cũ)</button>
-            <button onclick="exportBackupJSON()" style="background: #6f42c1; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">💾 Sao Lưu Dữ Liệu</button>
-            <button onclick="document.getElementById('importJSONInput').click()" style="background: #6c757d; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📂 Phục Hồi Dữ Liệu</button>
-            <input type="file" id="importJSONInput" accept=".json" onchange="importBackupJSON(event)" style="display: none;">
-        </div>
+           </div>
+        <!-- Cấu hình cho phép chọn mọi file văn bản/JSON trên điện thoại -->
+        <input type="file" id="importFileInput" accept=".json,application/json,text/plain,*/*" style="display: none;" onchange="importDataFromFile(event)">
 
+        <!-- Cụm nút bấm Sao lưu & Phục hồi -->
+        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+            <button onclick="exportDataJSON()" style="background: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            📥 Tải File Sao Lưu (.json)
+            </button>
+
+            <button onclick="document.getElementById('importFileInput').click()" style="background: #0d6efd; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                📤 Phục Hồi Từ File
+            </button>
+            <button onclick="importDataFromTextPaste()" style="background: #6c757d; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            📋 Dán Mã Phục Hồi (Dự phòng Mobile)
+            </button>
+        </div>
         <!-- Danh sách thẻ phòng -->
         <div id="roomGrid" class="room-grid"></div>
     </div>
