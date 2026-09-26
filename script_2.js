@@ -651,7 +651,111 @@ document.getElementById('addRoomForm')?.addEventListener('submit', function(e) {
     document.getElementById('addRoomForm').reset();
     renderRoomGrid();
 });
+// ========================================================
+// HỆ THỐNG SAO LƯU & PHỤC HỒI DỮ LIỆU TƯƠNG THÍCH MỌI THIẾT BỊ
+// ========================================================
+function normalizeRoomsData(dataArray) {
+    if (!Array.isArray(dataArray)) return [];
+    return dataArray.map(room => {
+        return {
+            id: room.id || (Date.now() + Math.random()),
+            ten_phong: room.ten_phong || room.name || "Phòng chưa tên",
+            gia_thue: Number(room.gia_thue || room.price) || 0,
+            so_nguoi: Number(room.so_nguoi || room.occupants) || 1,
+            trang_thai: room.trang_thai || "Trong",
+            chi_so_dien_cu: Number(room.chi_so_dien_cu) || 0,
+            chi_so_nuoc_cu: Number(room.chi_so_nuoc_cu) || 0,
+            contract: room.contract || { tenant_name: "", phone: "", start_date: "" },
+            note: room.note || ""
+        };
+    });
+}
 
+function processImportedJSON(jsonText) {
+    try {
+        if (jsonText.charCodeAt(0) === 0xFEFF) jsonText = jsonText.slice(1);
+        const parsed = JSON.parse(jsonText.trim());
+        let importedRooms = [];
+
+        if (Array.isArray(parsed)) {
+            importedRooms = parsed;
+        } else if (parsed && typeof parsed === 'object') {
+            importedRooms = parsed.roomsData || parsed.rooms || [];
+            if (parsed.bankInfo) {
+                localStorage.setItem('phuoc_bank_info', JSON.stringify(parsed.bankInfo));
+            }
+        } else {
+            throw new Error("Cấu trúc file sao lưu không hợp lệ!");
+        }
+
+        if (importedRooms.length === 0) {
+            alert("⚠️ File sao lưu trống hoặc không chứa danh sách phòng!");
+            return false;
+        }
+
+        roomsData = normalizeRoomsData(importedRooms);
+        localStorage.setItem('phuoc_rooms_data', JSON.stringify(roomsData));
+
+        if (typeof renderRoomList === 'function') renderRoomList();
+        if (typeof renderDashboard === 'function') renderDashboard();
+
+        alert(`🎉 PHỤC HỒI THÀNH CÔNG!\nĐã nạp lại dữ liệu cho ${roomsData.length} phòng trọ.`);
+        return true;
+    } catch (err) {
+        console.error("Lỗi đọc JSON:", err);
+        alert("❌ Không thể đọc file sao lưu này!\nChi tiết lỗi: " + err.message);
+        return false;
+    }
+}
+
+function exportDataJSON() {
+    try {
+        const backupData = {
+            version: "2.0",
+            exportDate: new Date().toISOString(),
+            roomsData: typeof roomsData !== 'undefined' ? roomsData : [],
+            bankInfo: JSON.parse(localStorage.getItem('phuoc_bank_info') || '{}')
+        };
+        const jsonString = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+        const fileName = `PhongTro_Backup_${new Date().toISOString().slice(0,10)}.json`;
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 1000);
+        alert("✅ Đã tải file sao lưu về máy!");
+    } catch (err) {
+        alert("❌ Lỗi khi xuất file sao lưu: " + err.message);
+    }
+}
+
+function importDataFromFile(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        processImportedJSON(e.target.result);
+        event.target.value = '';
+    };
+    reader.onerror = function() {
+        alert("❌ Không thể mở file trên thiết bị này!");
+        event.target.value = '';
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function importDataFromTextPaste() {
+    const jsonInput = prompt("👉 Dán toàn bộ nội dung file JSON sao lưu của bạn vào ô dưới đây:");
+    if (!jsonInput || !jsonInput.trim()) return;
+    processImportedJSON(jsonInput.trim());
+}
 // Khởi chạy hệ thống
 loadFromLocalStorage();
 renderRoomGrid();
