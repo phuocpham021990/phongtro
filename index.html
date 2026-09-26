@@ -1,91 +1,31 @@
 <!DOCTYPE html>
 <html lang="vi">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>    
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PHÒNG TRỌ PHẠM HỒNG PHƯỚC</title>
-    <!-- Thêm đuôi ?v=10 để bắt buộc trình duyệt điện thoại tải CSS mới -->
-    <link rel="stylesheet" href="style.css?v=10">
-    <style>
-        /* TỐI ƯU GIAO DIỆN MODAL TRÊN ĐIỆN THOẠI */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .modal-overlay.hidden { display: none !important; }
-
-        .modal-content {
-            background: white;
-            width: 100%;
-            max-width: 650px;
-            max-height: 90vh; /* Giữ khoảng trống 10% màn hình để không bị cấn */
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-        }
-
-        /* Thanh Header cố định luôn ở trên cùng */
-        .modal-header {
-            position: sticky;
-            top: 0;
-            background: #ffffff;
-            z-index: 100;
-            padding: 10px 15px;
-            border-bottom: 2px solid #eef2f5;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-back-mobile {
-            background: #0068ff;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        /* Cho phép cuộn nội dung bên trong modal */
-        .tab-content {
-            overflow-y: auto;
-            max-height: calc(90vh - 120px);
-            padding: 15px;
-        }
-    </style>
-    <!-- Thư viện xuất Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Phòng Trọ - PHẠM HỒNG PHƯỚC</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Thư viện hỗ trợ xuất file Excel -->
+    <script src="xlsx.full.min.js"></script>
+    <!-- đọc được tính năng chụp ảnh HTML thành ảnh -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>PHÒNG TRỌ PHẠM HỒNG PHƯỚC</h1>
         
         <!-- Form Thêm Phòng -->
-        <form id="addRoomForm" class="form-inline" onsubmit="handleAddRoom(event)">
-            <input type="text" id="newRoomName" placeholder="Tên phòng (VD: Phòng 01)" required>
-            <input type="number" id="newRoomPrice" placeholder="Giá phòng mặc định (VNĐ)" required>
+        <form id="addRoomForm" class="form-inline">
+            <input type="text" id="newRoomName" placeholder="Tên phòng (VD: Phòng 101)" required="">
+            <input type="number" id="newRoomPrice" placeholder="Giá phòng mặc định (VNĐ)" required="">
             <button type="submit">+ Thêm Phòng</button>
         </form>
 
         <!-- Thanh Tìm Kiếm & Lọc Trạng Thái -->
-        <div class="filter-bar">
-            <input type="text" id="searchInput" placeholder="🔍 Tìm phòng hoặc tên/CCCD..." oninput="filterRooms()">
-            <select id="statusFilter" onchange="filterRooms()">
+        <div class="filter-bar" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+            <input type="text" id="searchInput" placeholder="🔍 Tìm phòng hoặc tên/CCCD người ở..." oninput="filterRooms()" style="flex: 2; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            <select id="statusFilter" onchange="filterRooms()" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="OCCUPIED">🔴 Đã có người ở</option>
                 <option value="EMPTY">🟢 Phòng trống</option>
@@ -93,12 +33,12 @@
         </div>
 
         <!-- Thanh Báo Cáo, Xuất Excel & Thao Tác Hệ Thống -->
-        <div class="report-actions">
-            <button onclick="openGlobalReportModal()" class="btn-action btn-report">📊 Báo Cáo Doanh Thu</button>
-            <button onclick="exportAllTenantsToExcel()" class="btn-action btn-excel">📑 Xuất DS Tạm Trú (Excel)</button>
-            <button onclick="advanceAllElectricityMeters()" class="btn-action btn-cycle">🔄 Chốt Kỳ (Số Mới ➔ Số Cũ)</button>
-            <button onclick="exportBackupJSON()" class="btn-action btn-backup">💾 Sao Lưu Dữ Liệu</button>
-            <button onclick="document.getElementById('importJSONInput').click()" class="btn-action btn-restore">📂 Phục Hồi Dữ Liệu</button>
+        <div class="report-actions" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button onclick="openGlobalReportModal()" style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📊 Báo Cáo Doanh Thu</button>
+            <button onclick="exportAllTenantsToExcel()" style="background: #17a2b8; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📑 Xuất DS Tạm Trú (Excel)</button>
+            <button onclick="advanceAllElectricityMeters()" style="background: #ff9800; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">🔄 Chốt Kỳ (Số Mới ➔ Số Cũ)</button>
+            <button onclick="exportBackupJSON()" style="background: #6f42c1; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">💾 Sao Lưu Dữ Liệu</button>
+            <button onclick="document.getElementById('importJSONInput').click()" style="background: #6c757d; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📂 Phục Hồi Dữ Liệu</button>
             <input type="file" id="importJSONInput" accept=".json" onchange="importBackupJSON(event)" style="display: none;">
         </div>
 
@@ -106,50 +46,68 @@
         <div id="roomGrid" class="room-grid"></div>
     </div>
 
-   <!-- MODAL CHI TIẾT PHÒNG -->
+    <!-- MODAL CHI TIẾT PHÒNG -->
     <div id="roomModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="btn-back-mobile" onclick="closeModal()">⬅️ Quay lại</button>
-                <h2 id="modalRoomTitle" style="margin: 0; font-size: 16px; flex: 1; text-align: center;">Chi tiết phòng</h2>
-                <button class="btn-close" onclick="closeModal()" style="font-size: 24px; border: none; background: transparent; cursor: pointer; padding: 0 5px;">&times;</button>
+                <h2 id="modalRoomTitle">Chi tiết phòng</h2>
+                <button class="btn-close" onclick="closeModal()">×</button>
             </div>
 
             <!-- Thanh Chuyển Tab -->
             <div class="tab-bar">
-                <button class="tab-btn active" id="tabBtn1" onclick="openTab('tabTenants', this)">1. Con người</button>
-                <button class="tab-btn" id="tabBtn2" onclick="openTab('tabBilling', this)">2. Tiền phòng</button>
-                <button class="tab-btn" id="tabBtn3" onclick="openTab('tabEquipment', this)">3. Thiết bị</button>
-                <button class="tab-btn" id="tabBtn4" onclick="openTab('tabContract', this)">4. Hợp đồng</button>
+                <button class="tab-btn active" onclick="openTab('tabTenants')">1. Quản lý con người</button>
+                <button class="tab-btn" onclick="openTab('tabBilling')">2. Quản lý tiền phòng</button>
+                <button class="tab-btn" onclick="openTab('tabEquipment')">3. Quản lý thiết bị</button>
+                <button class="tab-btn" onclick="openTab('tabContract')">4. Hợp đồng &amp; Tiền cọc</button>
             </div>
-            ...
+
             <!-- TAB 1: QUẢN LÝ CON NGƯỜI -->
             <div id="tabTenants" class="tab-content active">
                 <h3 id="tenantFormTitle">Thêm người ở mới</h3>
-                <form id="tenantForm" class="grid-form" onsubmit="handleSaveTenant(event)">
+                <form id="tenantForm" class="grid-form">
                     <input type="hidden" id="editingTenantIndex" value="-1">
-                    <input type="text" id="tenantName" placeholder="Họ và tên" required>
-                    <input type="number" id="tenantBirth" placeholder="Năm sinh" required>
-                    <input type="text" id="tenantCCCD" placeholder="Số CCCD" required>
-                    <input type="text" id="tenantRole" placeholder="Định danh (Chủ hộ/Ở ghép)" required>
+                    <input type="text" id="tenantName" placeholder="Họ và tên" required="">
+                    <input type="number" id="tenantBirth" placeholder="Năm sinh" required="">
+                    <input type="text" id="tenantCCCD" placeholder="Số CCCD" required="">
+                    <input type="text" id="tenantRole" placeholder="Định danh (VD: Chủ hộ, Người ở ghép)" required="">
                     <div class="file-input-group">
-                        <label style="font-size: 12px; display: block; margin-bottom: 2px;">Ảnh giấy tờ (CCCD/Hợp đồng):</label>
+                        <label>Ảnh giấy tờ (CCCD/Hợp đồng):</label>
                         <input type="file" id="tenantDocImg" accept="image/*">
                     </div>
-                    <div class="form-btn-group">
-                        <button type="submit" id="btnSaveTenant" class="btn-primary">+ Thêm người ở</button>
-                        <button type="button" id="btnCancelTenant" class="btn-secondary hidden" onclick="resetTenantForm()">Hủy sửa</button>
+                    <div style="grid-column: span 2; display: flex; gap: 10px;">
+                        <button type="submit" id="btnSaveTenant" class="btn-primary" style="flex: 1;">+ Thêm người ở</button>
+                        <button type="button" id="btnCancelTenant" class="btn-secondary hidden" onclick="resetTenantForm()">Hủy chỉnh sửa</button>
                     </div>
                 </form>
 
                 <h3>Danh sách người đang ở</h3>
-                <div id="tenantList" class="cards-list" style="margin-top: 10px;"></div>
+                <div id="tenantList" class="cards-list"></div>
             </div>
 
             <!-- TAB 2: QUẢN LÝ TIỀN PHÒNG -->
             <div id="tabBilling" class="tab-content">
                 <div class="billing-form">
-                    <div class="form-group" style="margin-bottom: 10px;">
+                    <!-- Chọn Tháng / Năm để áp dụng tiền rác chuẩn xác -->
+                    <div class="form-row" style="background: #eef2f7; padding: 10px; border-radius: 4px; margin-bottom: 5px;">
+                        <div>
+                            <label style="font-weight:bold;">Tháng tính tiền:</label>
+                            <select id="billMonth" onchange="autoCapNhatTienRac()" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
+                                <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option>
+                                <option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option>
+                                <option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option>
+                                <option value="10" selected>Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-weight:bold;">Năm:</label>
+                            <select id="billYear" onchange="autoCapNhatTienRac()" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
+                                <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label>Đơn giá điện (VNĐ/kWh):</label>
                         <input type="number" id="priceElec" value="3000" oninput="calculateTotalBill()">
                     </div>
@@ -175,69 +133,64 @@
                     </div>
                     <div class="form-row">
                         <div>
-                            <label>Tiền rác (VNĐ):</label>
-                            <input type="number" id="garbageFee" value="0" oninput="calculateTotalBill()">
+                            <label>Tiền rác (Tự động gán theo số người):</label>
+                            <input type="number" id="garbageFee" readonly style="background-color: #e9ecef; font-weight: bold; color: #d9534f;">
+                            <small id="ghiChuTienRac" style="color: #666; font-style: italic;"></small>
                         </div>
                         <div>
-                            <label>Phụ thu (VNĐ):</label>
+                            <label>Phụ thu khác (VNĐ):</label>
                             <input type="number" id="surchargeFee" value="0" oninput="calculateTotalBill()">
                         </div>
                     </div>
 
                     <div class="total-box">
-                        <span>Tổng tiền thanh toán:</span>
+                        <span>Tổng tiền phải thanh toán:</span>
                         <strong id="grandTotalDisplay">0 VNĐ</strong>
                     </div>
 
-                    <div class="action-btn-group">
-                        <button type="button" class="btn-primary" onclick="saveBillingData()">💾 Lưu tiền phòng</button>
-                        <button type="button" class="btn-success" onclick="openReceiptModal()">🧾 Tạo & Gửi Zalo</button>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button type="button" class="btn-primary" onclick="saveBillingData()" style="flex: 1; padding: 12px;">💾 Lưu thông tin tiền phòng (Lưu Tháng)</button>
+                        <button type="button" class="btn-success" onclick="openReceiptModal()" style="flex: 1; padding: 12px; background: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">🧾 Tạo &amp; Gửi Phiếu Thu (Zalo)</button>
                     </div>
                 </div>
             </div>
 
             <!-- TAB 3: QUẢN LÝ TRANG THIẾT BỊ -->
             <div id="tabEquipment" class="tab-content">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-                    <h3 id="equipFormTitle" style="margin: 0;">Thêm / Thay thế thiết bị</h3>
-                    <button type="button" onclick="copyEquipmentToOtherRooms()" class="btn-action btn-excel" style="padding: 8px 12px; font-size: 13px;">📋 Áp dụng thiết bị sang phòng khác</button>
-                </div>
-
-                <form id="equipForm" class="grid-form" onsubmit="handleSaveEquip(event)">
+                <h3 id="equipFormTitle">Thêm / Thay thế thiết bị</h3>
+                <form id="equipForm" class="grid-form">
                     <input type="hidden" id="editingEquipIndex" value="-1">
-                    <input type="text" id="equipName" placeholder="Tên thiết bị" required>
+                    <input type="text" id="equipName" placeholder="Tên thiết bị trong phòng" required="">
                     <input type="text" id="replaceName" placeholder="Thiết bị thay (nếu có)">
                     <input type="date" id="replaceDate">
-                    <input type="number" id="equipQty" placeholder="Số lượng" value="1" min="1" required>
-                    <input type="number" id="equipUnitPrice" placeholder="Đơn giá (VNĐ)" required>
-                    <div class="form-btn-group">
-                        <button type="submit" id="btnSaveEquip" class="btn-primary">+ Thêm thiết bị</button>
-                        <button type="button" id="btnCancelEquip" class="btn-secondary hidden" onclick="resetEquipForm()">Hủy sửa</button>
+                    <input type="number" id="equipQty" placeholder="Số lượng" value="1" min="1" required="">
+                    <input type="number" id="equipUnitPrice" placeholder="Đơn giá (VNĐ)" required="">
+                    <div style="grid-column: span 2; display: flex; gap: 10px;">
+                        <button type="submit" id="btnSaveEquip" class="btn-primary" style="flex: 1;">+ Thêm thiết bị</button>
+                        <button type="button" id="btnCancelEquip" class="btn-secondary hidden" onclick="resetEquipForm()">Hủy chỉnh sửa</button>
                     </div>
                 </form>
 
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Tên thiết bị</th>
-                                <th>Thiết bị thay</th>
-                                <th>Thời gian</th>
-                                <th>SL</th>
-                                <th>Đơn giá</th>
-                                <th>Thành tiền</th>
-                                <th>Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="equipTableBody"></tbody>
-                    </table>
-                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tên thiết bị</th>
+                            <th>Thiết bị thay</th>
+                            <th>Thời gian thay</th>
+                            <th>Số lượng</th>
+                            <th>Đơn giá</th>
+                            <th>Thành tiền</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="equipTableBody"></tbody>
+                </table>
             </div>
 
             <!-- TAB 4: HỢP ĐỒNG & TIỀN CỌC -->
             <div id="tabContract" class="tab-content">
                 <div class="billing-form">
-                    <h3>Thông tin Hợp đồng & Tiền cọc</h3>
+                    <h3>Thông tin Hợp đồng &amp; Tiền cọc</h3>
                     <div class="form-row">
                         <div>
                             <label>Tiền cọc phòng (VNĐ):</label>
@@ -255,87 +208,86 @@
                         </div>
                         <div>
                             <label>Ghi chú hợp đồng:</label>
-                            <input type="text" id="contractNote" placeholder="Cọc 1 tháng, thanh toán đầu tháng">
+                            <input type="text" id="contractNote" placeholder="Ví dụ: Cọc 1 tháng, thanh toán đầu tháng">
                         </div>
                     </div>
-                    <button type="button" class="btn-primary" onclick="saveContractData()" style="width: 100%; margin-top: 10px;">💾 Lưu hợp đồng</button>
+                    <button type="button" class="btn-primary" onclick="saveContractData()" style="padding: 12px; margin-top: 10px;">💾 Lưu thông tin hợp đồng</button>
                 </div>
             </div>
         </div>
     </div>
 
-   <!-- MODAL XEM PHIẾU THU & GỬI ZALO TÍCH HỢP VIETQR -->
+    <!-- MODAL XEM PHIẾU THU & GỬI ZALO -->
     <div id="receiptModal" class="modal-overlay hidden" style="z-index: 2000;">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2>Phiếu Thu & Mã VietQR</h2>
-                <button class="btn-close" onclick="closeReceiptModal()">&times;</button>
-            </div>
+    <div class="modal-content" style="max-width: 500px; height: auto; max-height: 90vh;">
+        <div class="modal-header">
+            <h2>Phiếu Thu Tiền Phòng & QR Chuyển Khoản</h2>
+            <button class="btn-close" onclick="closeReceiptModal()">×</button>
+        </div>
+        
+        <!-- Nội dung phiếu thu -->
+        <div id="receiptPreview" class="receipt-box"></div>
 
-            <!-- Cài đặt tài khoản ngân hàng -->
-            <div style="background: #eef5ff; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">
-                <strong style="color: #0068ff;">💳 Cài đặt ngân hàng nhận tiền:</strong>
-                <div style="display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap;">
-                    <select id="bankCodeSelect" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc; flex: 1;" onchange="updateVietQR()">
-                        <option value="MB">MBBank (MB)</option>
-                        <option value="VCB">Vietcombank</option>
-                        <option value="ICB">VietinBank</option>
-                        <option value="BIDV">BIDV</option>
-                        <option value="TCB">Techcombank</option>
-                        <option value="ACB">ACB</option>
-                        <option value="TPB">TPBank</option>
-                        <option value="VPB">VPBank</option>
-                        <option value="VBA">Agribank</option>
-                        <option value="STB">Sacombank</option>
-                    </select>
-                    <input type="text" id="bankAccNoInput" placeholder="Số tài khoản..." style="padding: 6px; border-radius: 4px; border: 1px solid #ccc; flex: 1;" oninput="updateVietQR()">
-                    <input type="text" id="bankAccNameInput" placeholder="Tên chủ TK" value="PHAM HONG PHUOC" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc; flex: 1;" oninput="updateVietQR()">
-                </div>
-            </div>
+        <!-- KHUNG HIỂN THỊ MÃ QR NGÂN HÀNG -->
+        <div id="qrCodeContainer" style="text-align: center; margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px dashed #ccc;">
+            <p style="margin: 0 0 5px 0; font-weight: bold; color: #0068ff;">Mã QR Chuyển Khoản Nhanh:</p>
+            <div id="qrImageWrapper"></div>
+        </div>
 
-            <!-- Khung hiển thị Mã VietQR -->
-            <div id="qrCodeBox" style="text-align: center; margin-bottom: 10px; background: #fff; border: 1px dashed #4a90e2; border-radius: 8px; padding: 10px; min-height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <img id="vietQrImg" src="" alt="Mã VietQR" style="max-width: 230px; width: 100%; height: auto; border-radius: 6px; border: 1px solid #28a745; display: none;">
-                <p id="qrNotice" style="font-size: 13px; color: #d9534f; margin: 0; font-weight: bold;">⚠️ Hãy nhập Số tài khoản ở ô bên trên để hiện mã QR</p>
-                <p id="qrSubNotice" style="font-size: 11px; color: #555; margin: 4px 0 0 0; display: none;">(Khách quét mã sẽ tự điền Số tiền & Nội dung)</p>
-            </div>
-
-            <!-- Văn bản phiếu thu -->
-            <div id="receiptPreview" class="receipt-box" style="white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; max-height: 160px; overflow-y: auto;"></div>
-            <div class="action-btn-group" style="margin-top: 10px; display: flex; gap: 8px;">
-                <button type="button" class="btn-zalo" onclick="copyZaloText()" style="flex: 1;">📋 Copy văn bản gửi Zalo</button>
-            </div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button type="button" onclick="copyZaloImageAndOpenChat()" style="flex: 1; background: #0068ff; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">📋 Sao chép tin nhắn Zalo</button>
+            <button type="button" onclick="printReceipt()" style="background: #6c757d; color: white; border: none; padding: 12px 18px; border-radius: 4px; font-weight: bold; cursor: pointer;">🖨️ In / PDF</button>
         </div>
     </div>
-
-    <!-- MODAL BÁO CÁO DOANH THU -->
+    </div>
+   
+    <!-- MODAL BÁO CÁO DOANH THU & XUẤT EXCEL TỔNG HỢP -->
     <div id="reportModal" class="modal-overlay hidden" style="z-index: 1500;">
-        <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-content" style="max-width: 950px;">
             <div class="modal-header">
-                <h2>📊 Báo Cáo Doanh Thu Tháng</h2>
-                <button class="btn-close" onclick="closeReportModal()">&times;</button>
+                <h2>📊 Báo Cáo Doanh Thu Theo Tháng</h2>
+                <button class="btn-close" onclick="closeReportModal()">×</button>
             </div>
 
-            <div class="report-summary-header">
-                <div class="total-box" style="margin: 0; flex: 1;">
-                    <span>Tổng Doanh Thu:</span>
+            <!-- BỘ LỌC THÁNG / NĂM -->
+            <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #f8f9fa; padding: 12px; border-radius: 6px;">
+                <label style="font-weight: bold;">Chọn kỳ báo cáo:</label>
+                <select id="reportMonth" onchange="renderReportTable()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option>
+                    <option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option>
+                    <option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option>
+                    <option value="10" selected>Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
+                </select>
+                <select id="reportYear" onchange="renderReportTable()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+                </select>
+
+                <button onclick="exportInvoicesToExcel()" style="background: #28a745; color: white; border: none; padding: 9px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-left: auto;">
+                    📥 Xuất File Excel (.xls)
+                </button>
+            </div>
+
+            <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <div class="total-box" style="margin-top:0; width: 100%;">
+                    <span>Tổng Doanh Thu Tháng Chọn:</span>
                     <strong id="globalTotalDisplay" style="font-size: 20px;">0 VNĐ</strong>
                 </div>
-                <button onclick="exportInvoicesToExcel()" class="btn-action btn-excel" style="padding: 12px 15px;">📥 Xuất Hóa Đơn (Excel)</button>
             </div>
 
-            <div class="table-responsive" style="margin-top: 15px; max-height: 60vh;">
+            <!-- BẢNG THỐNG KÊ -->
+            <div style="margin-top: 15px; overflow-y: auto; flex: 1;">
                 <table class="data-table">
                     <thead>
                         <tr>
+                            <th>STT</th>
                             <th>Phòng</th>
-                            <th>Trạng Thái</th>
                             <th>Tiền phòng</th>
-                            <th>Điện (kWh)</th>
-                            <th>Tiền điện</th>
+                            <th>Tiền điện</th>  
                             <th>Tiền nước</th>
+                            <th>Tiền rác</th>
                             <th>Phụ thu</th>
-                            <th>Tổng cộng</th>
+                            <th>Tổng thanh toán</th>
+                            <th>Ngày lưu</th>
                         </tr>
                     </thead>
                     <tbody id="reportTableBody"></tbody>
@@ -344,7 +296,6 @@
         </div>
     </div>
 
-    <!-- Gọi Script có đuôi xóa cache ?v=20 -->
-   <script src="script.js?v=21"></script>
+    <script src="script_2.js"></script>
 </body>
 </html>
