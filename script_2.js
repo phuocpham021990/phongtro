@@ -770,6 +770,143 @@ window.addEventListener('DOMContentLoaded', () => {
     if (typeof renderRoomList === 'function') renderRoomList();
     if (typeof renderDashboard === 'function') renderDashboard();
 });
+// ========================================================
+// TÍNH NĂNG SAO CHÉP THIẾT BỊ HÀNG LOẠT GIỮA CÁC PHÒNG
+// ========================================================
+
+// 1. Mở bảng chọn sao chép thiết bị
+function openCopyEquipmentModal() {
+    let modal = document.getElementById('copyEquipmentModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'copyEquipmentModal';
+        modal.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;";
+        modal.innerHTML = `
+            <div style="background: white; padding: 25px; border-radius: 10px; width: 420px; max-width: 90%; font-family: Arial, sans-serif; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                <h3 style="margin-top: 0; color: #0d6efd; border-bottom: 2px solid #eee; padding-bottom: 10px;">📋 Sao Chép Dữ Liệu Thiết Bị</h3>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">1. Chọn phòng nguồn (Lấy thiết bị từ phòng này):</label>
+                    <select id="sourceRoomSelect" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px;">
+                        <!-- Danh sách phòng -->
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">2. Chọn các phòng nhận (Phòng đích):</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+                        <button type="button" onclick="selectAllTargetRooms(true)" style="font-size: 12px; padding: 4px 10px; background: #e9ecef; border: 1px solid #ced4da; border-radius: 4px; cursor: pointer;">✅ Chọn tất cả</button>
+                        <button type="button" onclick="selectAllTargetRooms(false)" style="font-size: 12px; padding: 4px 10px; background: #e9ecef; border: 1px solid #ced4da; border-radius: 4px; cursor: pointer;">❌ Bỏ chọn tất cả</button>
+                    </div>
+                    <div id="targetRoomsList" style="max-height: 160px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 5px; background: #fdfdfd;">
+                        <!-- Checkbox các phòng -->
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" onclick="closeCopyEquipmentModal()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Hủy</button>
+                    <button type="button" onclick="executeCopyEquipment()" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Tiến Hành Sao Chép</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    // Đổ dữ liệu phòng vào giao diện
+    const sourceSelect = document.getElementById('sourceRoomSelect');
+    const targetList = document.getElementById('targetRoomsList');
+    
+    sourceSelect.innerHTML = '';
+    targetList.innerHTML = '';
+
+    if (!roomsData || roomsData.length === 0) {
+        alert("Chưa có dữ liệu phòng trọ nào!");
+        return;
+    }
+
+    roomsData.forEach(room => {
+        const roomName = room.ten_phong || `Phòng ${room.id}`;
+        
+        // Option phòng nguồn
+        const opt = document.createElement('option');
+        opt.value = room.id;
+        opt.textContent = roomName;
+        sourceSelect.appendChild(opt);
+
+        // Checkbox phòng đích
+        const div = document.createElement('div');
+        div.style.marginBottom = '6px';
+        div.innerHTML = `
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                <input type="checkbox" class="target-room-checkbox" value="${room.id}" style="width: 16px; height: 16px;">
+                <span>${roomName}</span>
+            </label>
+        `;
+        targetList.appendChild(div);
+    });
+
+    modal.style.display = 'flex';
+}
+
+function closeCopyEquipmentModal() {
+    const modal = document.getElementById('copyEquipmentModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function selectAllTargetRooms(select) {
+    document.querySelectorAll('.target-room-checkbox').forEach(cb => cb.checked = select);
+}
+
+function executeCopyEquipment() {
+    const sourceRoomId = document.getElementById('sourceRoomSelect').value;
+    const checkedBoxes = document.querySelectorAll('.target-room-checkbox:checked');
+
+    if (!sourceRoomId) {
+        alert("Vui lòng chọn phòng nguồn!");
+        return;
+    }
+
+    if (checkedBoxes.length === 0) {
+        alert("Vui lòng chọn ít nhất một phòng nhận thiết bị!");
+        return;
+    }
+
+    const sourceRoom = roomsData.find(r => String(r.id) === String(sourceRoomId));
+    if (!sourceRoom) {
+        alert("Không tìm thấy dữ liệu phòng nguồn!");
+        return;
+    }
+
+    // Lấy nội dung thiết bị từ phòng nguồn (hỗ trợ nhiều tên trường dữ liệu khác nhau)
+    const sourceEquipment = sourceRoom.thiet_bi || sourceRoom.devices || sourceRoom.equipment || sourceRoom.note || "";
+    
+    if (!sourceEquipment.trim() && !confirm("⚠️ Phòng nguồn đang trống thiết bị. Bạn có chắc muốn sao chép nội dung trống này sang các phòng đã chọn không?")) {
+        return;
+    }
+
+    let count = 0;
+    checkedBoxes.forEach(cb => {
+        const targetId = cb.value;
+        // Không tự sao chép đè lên chính phòng nguồn
+        if (String(targetId) !== String(sourceRoomId)) {
+            const targetRoom = roomsData.find(r => String(r.id) === String(targetId));
+            if (targetRoom) {
+                targetRoom.thiet_bi = sourceEquipment;
+                if (targetRoom.devices !== undefined) targetRoom.devices = sourceEquipment;
+                if (targetRoom.equipment !== undefined) targetRoom.equipment = sourceEquipment;
+                count++;
+            }
+        }
+    });
+
+    // Lưu vào localStorage và cập nhật lại giao diện trang web
+    localStorage.setItem('phuoc_rooms_data', JSON.stringify(roomsData));
+    if (typeof renderRoomList === 'function') renderRoomList();
+    if (typeof renderDashboard === 'function') renderDashboard();
+
+    alert(`🎉 SAO CHÉP THÀNH CÔNG!\nĐã đồng bộ thiết bị sang ${count} phòng được chọn.`);
+    closeCopyEquipmentModal();
+}
 // Khởi chạy hệ thống
 loadFromLocalStorage();
 renderRoomGrid();
