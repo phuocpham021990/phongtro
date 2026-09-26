@@ -693,13 +693,15 @@ function processImportedJSON(jsonText) {
             return false;
         }
 
-        roomsData = normalizeRoomsData(importedRooms);
-        localStorage.setItem('phuoc_rooms_data', JSON.stringify(roomsData));
+        const cleanedRooms = normalizeRoomsData(importedRooms);
+        
+        // Lưu thẳng vào bộ nhớ localStorage của trình duyệt
+        localStorage.setItem('phuoc_rooms_data', JSON.stringify(cleanedRooms));
 
-        if (typeof renderRoomList === 'function') renderRoomList();
-        if (typeof renderDashboard === 'function') renderDashboard();
-
-        alert(`🎉 PHỤC HỒI THÀNH CÔNG!\nĐã nạp lại dữ liệu cho ${roomsData.length} phòng trọ.`);
+        alert(`🎉 PHỤC HỒI THÀNH CÔNG!\nĐã nạp dữ liệu cho ${cleanedRooms.length} phòng. Trang web sẽ tự động làm mới để hiển thị.`);
+        
+        // Tự động tải lại trang ngay lập tức để ứng dụng nhận dữ liệu mới
+        location.reload();
         return true;
     } catch (err) {
         console.error("Lỗi đọc JSON:", err);
