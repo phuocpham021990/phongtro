@@ -660,8 +660,11 @@ document.getElementById('addRoomForm')?.addEventListener('submit', function(e) {
     renderRoomGrid();
 });
 // ========================================================
-// HỆ THỐNG SAO LƯU & PHỤC HỒI DỮ LIỆU TƯƠNG THÍCH MỌI THIẾT BỊ
+/// ========================================================
+// HỆ THỐNG SAO LƯU & PHỤC HỒI DỮ LIỆU (ĐÃ SỬA LỖI ĐỒNG BỘ)
 // ========================================================
+const STORAGE_KEY = 'quanLyPhongTro_Data';
+
 function normalizeRoomsData(dataArray) {
     if (!Array.isArray(dataArray)) return [];
     return dataArray.map(room => {
@@ -669,12 +672,11 @@ function normalizeRoomsData(dataArray) {
             id: room.id || (Date.now() + Math.random()),
             ten_phong: room.ten_phong || room.name || "Phòng chưa tên",
             gia_thue: Number(room.gia_thue || room.price) || 0,
-            so_nguoi: Number(room.so_nguoi || room.occupants) || 1,
-            trang_thai: room.trang_thai || "Trong",
-            chi_so_dien_cu: Number(room.chi_so_dien_cu) || 0,
-            chi_so_nuoc_cu: Number(room.chi_so_nuoc_cu) || 0,
-            contract: room.contract || { tenant_name: "", phone: "", start_date: "" },
-            note: room.note || ""
+            billing: room.billing || { priceElec: 3000, oldElec: 0, newElec: 0, waterFee: 0, garbageFee: 36000, surchargeFee: 0 },
+            contract: room.contract || { depositAmount: 0, startDate: '', contractMonths: 12, note: '' },
+            tenants: Array.isArray(room.tenants) ? room.tenants : [],
+            equipments: Array.isArray(room.equipments) ? room.equipments : [],
+            historyBilling: Array.isArray(room.historyBilling) ? room.historyBilling : []
         };
     });
 }
@@ -703,13 +705,14 @@ function processImportedJSON(jsonText) {
 
         const cleanedRooms = normalizeRoomsData(importedRooms);
         
-        // Lưu thẳng vào bộ nhớ localStorage của trình duyệt
-        localStorage.setItem('phuoc_rooms_data', JSON.stringify(cleanedRooms));
+        // Cập nhật biến toàn cục & Lưu đúng khóa duy nhất
+        roomsData = cleanedRooms;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(roomsData));
 
-        alert(`🎉 PHỤC HỒI THÀNH CÔNG!\nĐã nạp dữ liệu cho ${cleanedRooms.length} phòng. Trang web sẽ tự động làm mới để hiển thị.`);
+        alert(`🎉 PHỤC HỒI THÀNH CÔNG!\nĐã nạp dữ liệu cho ${cleanedRooms.length} phòng.`);
         
-        // Tự động tải lại trang ngay lập tức để ứng dụng nhận dữ liệu mới
-        location.reload();
+        // Vẽ lại giao diện ngay lập tức
+        renderRoomGrid();
         return true;
     } catch (err) {
         console.error("Lỗi đọc JSON:", err);
@@ -766,10 +769,6 @@ function importDataFromTextPaste() {
     if (!jsonInput || !jsonInput.trim()) return;
     processImportedJSON(jsonInput.trim());
 }
-window.addEventListener('DOMContentLoaded', () => {
-    if (typeof renderRoomList === 'function') renderRoomList();
-    if (typeof renderDashboard === 'function') renderDashboard();
-});
 // ========================================================
 // TÍNH NĂNG SAO CHÉP THIẾT BỊ HÀNG LOẠT GIỮA CÁC PHÒNG
 // ========================================================
